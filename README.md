@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # OAI Reverse Proxy
 Reverse proxy server for:
 * Openai Api 
@@ -129,3 +130,6 @@ Inside html various replacments will happen with these {tags}:
 
 
 
+=======
+# JustSomeCodeD
+>>>>>>> a40f61cb4138ba4bbb3c962cc36c13bdbac2dbfb

@@ -1,0 +1,259 @@
+
+<%- include("../_partials/admin-header", { title: "Users - OAI Reverse Proxy Admin" }) %>
+    <h1>User Token List</h1>
+	
+
+
+<hr>
+| <div id="allActiveDaily" style="display: inline;"></div> | <div id="allActiveWeekly" style="display: inline;"></div> | <div id="allActiveMonthly" style="display: inline;"></div> |<br>
+<hr>
+<div id="allActive" style="display: inline;"></div>
+<br>
+<div id="allActiveTemp" style="display: inline;"></div><br><br>
+<hr> Additional Actions 
+<button onclick="remove1monthTempKeys()">Remove all temp tokens over 1 month</button> 
+<br><br>
+<style>
+	th {
+	background-color:#301934;
+}
+
+tr td:first-child {
+  background-color:#2b2b2b;
+}
+
+th.active {
+	background-color:#301934;
+}
+
+a:link {
+  color: purple;
+  text-decoration: none;
+}
+
+a:visited {
+  color: pink;
+  text-decoration: none;
+}
+th a:visited {
+  color: white;
+  text-decoration: none;
+}
+
+.edit {
+	color:#CF9FFF;
+	font-weight:550;
+}
+
+</style>
+
+
+<input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+
+<% if (users.length === 0) { %>
+<p>No users found.</p>
+<% } else { %>
+<table>
+  <thead>
+	<tr>
+	  <th>Admin Note</th>
+	  <th>Alias</th>
+	  <th>Token</th>
+	  <th style="width:2%" <% if (sort.includes("ip")) { %>class="active"<% } %> ><a href="/admin/manage/list-users?sort=ip">Unique IPs this session</a></th>
+	  <th <% if (sort.includes("promptCount")) { %>class="active"<% } %> ><a href="/admin/manage/list-users?sort=promptCount">Prompts</a></th>
+	  <th>Type</th>
+	  <th <% if (sort.includes("createdAt")) { %>class="active"<% } %> ><a href="/admin/manage/list-users?sort=createdAt">Created (UTC)</a></th>
+	  <th <% if (sort.includes("lastUsedAt")) { %>class="active"<% } %> ><a href="/admin/manage/list-users?sort=lastUsedAt">Last Used (UTC)</a></th>
+	  <th colspan="2">Banned?</th>
+	  <th colspan="2">Delete</th>
+	</tr>
+  </thead>
+	<tbody>
+	  <% users.forEach(function(user){ %>
+		  <tr>
+			<td class="edit" onclick="fetch('/admin/manage/edit-user/<%- user.token %>', {method: 'POST', credentials: 'same-origin', body: JSON.stringify({_csrf: document.querySelector('meta[name=csrf-token]').getAttribute('content'), toEdit: 'Note', valueOfEdit: prompt('(Don\'t do it, if you don\'t know what you are doing ._.) Enter the new value for Note:')}), headers: {'Content-Type': 'application/json'}}).then(function() {window.location.reload();})">
+			  <%= user.note %></a></code>
+			</td>
+			<td><%= user.alias %></td>
+			<td>
+			  <code><a href="/admin/manage/view-user/<%= user.token %>"><%= user.token %></a></code>
+			</td>
+			<td><%- user.ip.length %></td>
+			<td><%= user.promptCount %></td>
+			<td><%= user.type %></td>
+			<td><%= user.createdAt %></td>
+			<td><%= user.lastUsedAt ?? "never" %></td>
+			<td class="actions">
+			  <% if (user.disabledAt) { %>
+				<a title="Unban" href="#" class="unban" data-token="<%= user.token %>">🔄️</a>
+			  <% } else { %>
+				<a title="Ban" href="#" class="ban" data-token="<%= user.token %>">🚫</a>
+			  <% } %>
+			</td>
+			<td><%= user.disabledAt ? "Yes" : "No" %> <%= user.disabledReason ? `(${user.disabledReason})` : "" %></td>
+			<td class="action_delete">
+				<a title="Delete" href="#" class="del" data-del-token="<%= user.token %>">&#10060;</a>
+			</td>
+		  </tr>
+	<% }); %>
+</table>
+
+<ul class="pagination">
+  <% if (page > 1) { %>
+  <li><a href="/admin/manage/list-users?sort=<%= sort %>&page=<%= page - 1 %>">&laquo;</a></li>
+  <% } %> <% for (var i = 1; i <= pageCount; i++) { %>
+  <li <% if (i === page) { %>class="active"<% } %>><a href="/admin/manage/list-users?sort=<%= sort %>&page=<%= i %>"><%= i %></a></li>
+  <% } %> <% if (page < pageCount) { %>
+  <li><a href="/admin/manage/list-users?sort=<%= sort %>&page=<%= page + 1 %>">&raquo;</a></li>
+  <% } %>
+</ul>
+
+<p>Showing <%= page * pageSize - pageSize + 1 %> to <%= users.length + page * pageSize - pageSize %> of <%= totalCount %> users.</p>
+<%- include("../_partials/pagination") %>
+<% } %>
+    
+
+
+<script>
+const oneDayInMilliseconds = 24 * 60 * 60 * 1000;
+const oneWeekInMilliseconds = oneDayInMilliseconds * 7;
+const oneMonthInMilliseconds = oneDayInMilliseconds * 30.44;
+const currentTime = Date.now();
+const data = <%- JSON.stringify(users) %>;
+
+function remove1monthTempKeys()  {
+	const currentTimestamp = Date.now();
+	const usersToDelete = [];
+	data.forEach(function(user){
+		if (user.type == "temp") {
+			if (user.lastUsedAt <= currentTimestamp-oneMonthInMilliseconds) {
+				usersToDelete.push(user);
+			} else if (typeof user.lastUsedAt == 'undefined' && user.createdAt <= currentTimestamp-oneMonthInMilliseconds) {
+				usersToDelete.push(user);
+			}
+		}
+	})
+	const confirmation = window.confirm("Do you want to delete "+usersToDelete.length+" temp tokens? (more than 1 month old)");
+	if (confirmation) {
+		usersToDelete.forEach(function(user){ 
+			fetch(
+          "/admin/manage/delete-user/" + user.token,
+          { 
+            method: "POST", 
+            credentials: "same-origin",
+            body: JSON.stringify({  _csrf: document.querySelector("meta[name=csrf-token]").getAttribute("content") }),
+            headers: { "Content-Type": "application/json" }
+          }).then(() => window.location.reload())  
+		})
+	}
+}
+
+
+
+
+let filteredTokens = data.filter(item => {
+  const isPromptLimitMinusOne = item.promptLimit === -1;
+  const isWithinOneDay = currentTime - item.lastUsedAt <= oneDayInMilliseconds;
+  return isPromptLimitMinusOne && isWithinOneDay;
+}).map(item => item.tokenGptCount);
+const allActiveDaily = filteredTokens.length;
+
+filteredTokens = data.filter(item => {
+  const isPromptLimitMinusOne = item.promptLimit === -1;
+  const isWithinOneDay = currentTime - item.lastUsedAt <= oneWeekInMilliseconds;
+  return isPromptLimitMinusOne && isWithinOneDay;
+}).map(item => item.tokenGptCount);
+const allActiveWeekly = filteredTokens.length;
+
+filteredTokens = data.filter(item => {
+  const isPromptLimitMinusOne = item.promptLimit === -1;
+  const isWithinOneDay = currentTime - item.lastUsedAt <= oneMonthInMilliseconds;
+  return isPromptLimitMinusOne && isWithinOneDay;
+}).map(item => item.tokenGptCount);
+const allActiveMonthly = filteredTokens.length;
+
+
+filteredTokens = data.filter(item => {
+  const isPromptLimitMinusOneOrNull = item.token.match("temp-");
+  return !isPromptLimitMinusOneOrNull;
+}).map(item => item.tokenGptCount);
+
+const allActive = filteredTokens.length;
+
+filteredTokens = data.filter(item => {
+  const isis = item.token.match("temp-");
+  return isis;
+}).map(item => item.tokenGptCount);
+
+const allActiveTemp = filteredTokens.length;
+
+document.getElementById("allActiveDaily").innerHTML = "Daily Active Users: " + allActiveDaily;
+document.getElementById("allActiveWeekly").innerHTML = "Weekly Active Users: " + allActiveWeekly;
+document.getElementById("allActiveMonthly").innerHTML = "Monthly Active Users: " + allActiveMonthly;
+document.getElementById("allActive").innerHTML = "All Active Permament Tokens: " + allActive;
+document.getElementById("allActiveTemp").innerHTML = "All Active Temporary Tokens: " + allActiveTemp;
+document.querySelectorAll("td.actions a.ban").forEach(function (a) {
+a.addEventListener("click", function (e) {
+  e.preventDefault();
+  var token = a.getAttribute("data-token");
+  if (confirm("Are you sure you want to ban this user?")) {
+	let reason = prompt("Reason for ban:");
+	fetch(
+	  "/admin/manage/disable-user/" + token,
+	  { 
+		method: "POST", 
+		credentials: "same-origin",
+		body: JSON.stringify({ reason, _csrf: document.querySelector("meta[name=csrf-token]").getAttribute("content") }),
+		headers: { "Content-Type": "application/json" }
+	  }).then(() => window.location.reload());
+  }
+});
+});
+
+document.querySelectorAll("td.action_delete a.del").forEach(function (a) {
+a.addEventListener("click", function (e) {
+  e.preventDefault();
+  var token = a.getAttribute("data-del-token");
+  if (confirm("Are you sure you want to delete this user: "+token)) {
+	fetch(
+	  "/admin/manage/delete-user/" + token,
+	  { 
+		method: "POST", 
+		credentials: "same-origin",
+		body: JSON.stringify({  _csrf: document.querySelector("meta[name=csrf-token]").getAttribute("content") }),
+		headers: { "Content-Type": "application/json" }
+	  }).then(() => window.location.reload());
+  }
+});
+});
+
+
+document.querySelectorAll("td.actions a.unban").forEach(function (a) {
+a.addEventListener("click", function (e) {
+  e.preventDefault();
+  var token = a.getAttribute("data-token");
+  if (confirm("Are you sure you want to unban this user?")) {
+	fetch(
+	  "/admin/manage/reactivate-user/" + token,
+	  { 
+		method: "POST", 
+		credentials: "same-origin",
+		body: JSON.stringify({ _csrf: document.querySelector("meta[name=csrf-token]").getAttribute("content") }),
+		headers: { "Content-Type": "application/json" }
+	  }
+	).then(() => window.location.reload());
+  }
+});
+});
+document.querySelectorAll("td").forEach(function(td) {
+if (td.innerText.match(/^\d{13}$/)) {
+  if (td.innerText == 0) return 'never';
+  var date = new Date(parseInt(td.innerText));
+  td.innerText = date.toISOString().replace("T", " ").replace(/\.\d+Z$/, "");
+}
+});
+</script>
+
+
+
+<%- include("../_partials/admin-footer") %>

@@ -1,0 +1,262 @@
+<%- include("../_partials/admin-header", { title: "View User - OAI Reverse Proxy Admin" }) %>
+<h1>View User</h1>
+
+<script>
+function toggleExpand(timestamp) {
+    var expandDiv = document.getElementById('expand_' + timestamp);
+    if (expandDiv.style.display === 'none') {
+        expandDiv.style.display = 'block';
+    } else {
+        expandDiv.style.display = 'none';
+    }
+}
+</script>
+<style>
+  th:nth-child(n+1) {
+        background-color:#0a0a0a;
+    }
+
+    th.active {
+        background-color:#301934;
+    }
+
+    a:link {
+      color: purple;
+      text-decoration: none;
+    }
+
+    .edit:hover {
+        background-color:#1a1a1a;
+        cursor: pointer;
+    }
+
+    a:visited {
+      color: pink;
+      text-decoration: none;
+    }
+    th a:visited {
+      color: white;
+      text-decoration: none;
+    }
+    </style>
+<table class="table table-striped">
+  <thead>
+    <tr>
+      <th style="width:32px;" scope="col">Edit</th>
+      <th scope="col">Key</th>
+      <th scope="col">Value</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th scope="row" style="width:32px;">⛔</th>
+      <th scope="row">Alias</th>
+      <td><%- user.alias %></td>
+    </tr>
+    <tr>
+      <th class="edit" scope="row" style="width:32px;">✍</th>
+      <th scope="row">Note</th>
+      <td><%- user.note %></td>
+    </tr>
+    <tr>
+      <th class="edit" scope="row" style="width:32px;">✍</th>
+      <th scope="row">Token</th>
+      <td><%- user.token %></td>
+    </tr>
+    <tr>
+      <th scope="row" style="width:32px;">⛔</th>
+      <th scope="row">Token Hash</th>
+      <td><%- user.tokenHash %></td>
+    </tr>
+    <tr>
+      <th class="edit" class="edit" scope="row" style="width:32px;">✍</th>
+      <th scope="row">Type</th>
+      <td><%- user.type %></td>
+    </tr>
+    <tr>
+      <th class="edit" scope="row" style="width:32px;">✍</th>
+      <th scope="row">Rate Limit</th>
+      <td><%- user.rateLimit %></td>
+    </tr>
+    <tr>
+      <th scope="row" style="width:32px;">⛔</th>
+      <th scope="row">Created At</th>
+      <td><%- user.createdAt %></td>
+    </tr>
+    <tr>
+      <th scope="row" style="width:32px;">⛔</th>
+      <th scope="row">Last Used At</th>
+      <td><%- user.lastUsedAt || "never" %></td>
+    </tr>
+    <tr>
+      <th scope="row" style="width:32px;">⛔</th>
+      <th scope="row">Disabled At</th>
+      <td><%- user.disabledAt %></td>
+    </tr>
+    <tr>
+      <th class="edit" scope="row" style="width:32px;">✍</th>
+      <th scope="row">Disabled Reason</th>
+      <td><%- user.disabledReason %></td>
+    </tr>
+    <tr>
+      <th scope="row" style="width:32px;">⛔</th>
+      <th scope="row">IPs</th>
+      <td>
+        <a href="#" id="ip-list-toggle">Show all (<%- user.ip.length %>)</a>
+        <ol id="ip-list" style="display:none; padding-left:1em; margin: 0;">
+          <% user.ip.forEach((ip, index) => { %>
+            <li><code><%- ip %></code></li>
+          <% }) %>
+        </ol>
+      </td>
+    </tr>
+    <tr>
+      <th scope="row" style="width:32px;">⛔</th>
+      <th scope="row">IPs Prompt Count's</th>
+      <td>
+        <a href="#" id="ipcount-list-toggle">Show all (<%
+          let totalPromptCount = 0;
+          Object.values(user.ipPromptCount).forEach(count => {
+            Object.values(count).forEach(promptCount => {
+              totalPromptCount += promptCount;
+            });
+          });
+        %><%= totalPromptCount %>)</a>
+        <ol id="ipcount-list" style="display:none; padding-left:1em; margin: 0;">
+         <% Object.entries(user.ipPromptCount).forEach(([timestamp, ipInfo]) => { %>
+			<div>
+			  Timestamp: <%= new Date(Number(timestamp)).toLocaleString() %>
+			  <% Object.entries(ipInfo).forEach(([ipHash, modelCounts]) => { %>
+				<% Object.entries(modelCounts).forEach(([model, count]) => { %>
+				  <div>IP Hash: <%= ipHash %> Model: <%= model %>, Count: <%= count %></div>
+				<% }) %>
+			  <% }) %>
+			</div>
+		  <% }) %>
+        </ol>
+      </td>
+    </tr>
+    <tr>
+      <th class="edit" scope="row" style="width:32px;">✍</th>
+      <th scope="row">Prompt Limit</th>
+      <td><%- user.promptLimit %></td>
+    </tr>
+    <tr>
+      <th class="edit" scope="row" style="width:32px;">✍</th>
+      <th scope="row">Time Limit</th>
+      <td><%- user.timeLimit %></td>
+    </tr>
+    <tr>
+      <th class="edit" scope="row" style="width:32px;">✍</th>
+      <th scope="row">End Time Limit</th>
+      <td><%- user.endTimeLimit %></td>
+    </tr>
+    <tr>
+      <th title="Just click on checkboxes to change allowed models." scope="row" style="width:32px;">❓</th>
+      <th scope="row">Allowed Models</th>
+      <td>
+        <label>
+          <input onclick="sendPostRequest('Gpt', this.checked)" type="checkbox" name="user.allowGpt" value="Gpt" <% if (user.allowGpt) { %>checked<% } %>> Gpt
+        </label>
+        <br>
+        <label>
+          <input onclick="sendPostRequest('Claude', this.checked)" type="checkbox" name="user.allowClaude" value="Claude" <% if (user.allowClaude) { %>checked<% } %>> Claude
+        </label>
+        <br>
+        <label>
+          <input onclick="sendPostRequest('Google', this.checked)" type="checkbox" name="user.allowGoogle" value="Google" <% if (user.allowGoogle) { %>checked<% } %>> Google
+        </label>
+        <br>
+        <label>
+          <input onclick="sendPostRequest('Ai21', this.checked)" type="checkbox" name="user.allowAi21" value="Ai21" <% if (user.allowAi21) { %>checked<% } %>> Ai21
+        </label>
+      </td>
+    </tr>
+    <tr>
+      <th scope="row" style="width:32px;">⛔</th>
+      <th scope="row">All Prompt Count</th>
+      <td><pre><%= JSON.stringify(user.allPromptCount, null, 2) %></pre></td>
+    </tr>
+    <tr>
+      <th scope="row" style="width:32px;">⛔</th>
+      <th scope="row">All Token Count Input</th>
+      <td><pre><%= JSON.stringify(user.allTokenCountInput, null, 2) %></pre></td>
+    </tr>
+    <tr>
+      <th scope="row" style="width:32px;">⛔</th>
+      <th scope="row">All Token Count Output</th>
+      <td><pre><%= JSON.stringify(user.allTokenCountOutput, null, 2) %></pre></td>
+    </tr>
+  </tbody>
+</table>
+
+<script>
+  document.getElementById("ip-list-toggle").addEventListener("click", (e) => {
+    e.preventDefault();
+    document.getElementById("ip-list").style.display = "block";
+    document.getElementById("ip-list-toggle").style.display = "none";
+  });
+  document.getElementById("ipcount-list-toggle").addEventListener("click", (e) => {
+    e.preventDefault();
+    document.getElementById("ipcount-list").style.display = "block";
+    document.getElementById("ipcount-list-toggle").style.display = "none";
+  });
+
+  const editBtns = document.querySelectorAll('th.edit');
+  editBtns.forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.preventDefault();
+    });
+  });
+
+  var editElements = document.querySelectorAll(".edit");
+
+  function sendPostRequest(toEdit, valueOfEdit) {
+    var userToken = "<%- user.token %>";
+    fetch("/admin/manage/edit-user/" + userToken, {
+      method: "POST",
+      credentials: "same-origin",
+      body: JSON.stringify({
+        _csrf: document
+          .querySelector("meta[name=csrf-token]")
+          .getAttribute("content"),
+        toEdit: toEdit,
+        valueOfEdit: valueOfEdit
+      }),
+      headers: { "Content-Type": "application/json" },
+    }).then(function() {
+      window.location.reload();
+    });
+  }
+
+  editElements.forEach(function(element) {
+    element.addEventListener("click", function() {
+      var userToken = "<%- user.token %>";
+      var trElement = element.closest("tr"); // Find the closest 'tr' element
+      var keyElement = trElement.querySelector("th:nth-child(2)");
+
+      var _e = keyElement.textContent.trim();
+
+      var _v = prompt("(Don't do it, if you don't know what you are doing ._.) Enter the new value for "+_e+":");
+
+      if (_v !== null) {
+        fetch("/admin/manage/edit-user/" + userToken, {
+          method: "POST",
+          credentials: "same-origin",
+          body: JSON.stringify({
+            _csrf: document
+              .querySelector("meta[name=csrf-token]")
+              .getAttribute("content"),
+            toEdit: _e,
+            valueOfEdit: _v
+          }),
+          headers: { "Content-Type": "application/json" },
+        }).then(function() {
+          window.location.reload();
+        });
+      }
+    });
+  });
+</script>
+
+<%- include("../_partials/admin-footer") %>

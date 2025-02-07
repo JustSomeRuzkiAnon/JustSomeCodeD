@@ -1,0 +1,43 @@
+<%- include("../_partials/admin-header", { title: "Create User - OAI Reverse Proxy Admin" }) %>
+<!-- 
+ -->
+ <hr>
+<h1>Create Permament User Token</h1>
+<form action="/admin/manage/create-user" method="post">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+  Rate limit (Requests per minute): <input type="number" value=5 name="rateLimit" /><br>
+  (Optional) Prompt limit daily (24h resets after creation): <input type="number" value=-1 name="promptLimit" /><br>
+  <input type="submit" value="Create" />
+</form>
+ <br><hr>
+<h1>Create Prompt Limited Temporary User Token</h1>
+<form action="/admin/manage/create-temp-user" method="post">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+  <input type="hidden" name="timeLimit" value=-1 />
+  Prompt limit: <input type="number" value=100 name="promptLimit" /><br> Rate limit (Requests per minute): <input type="number" value=5 name="rateLimit" /><br>
+  <input type="submit" value="Create" />
+</form>
+ <br><hr>
+<h1>Create Time Limited Temporary User Token</h1>
+<form action="/admin/manage/create-temp-user" method="post">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+  <input type="hidden" name="promptLimit" value=-1 />
+  Time limit (Seconds): <input type="number" value=3600 name="timeLimit" /><br> Rate limit (Requests per minute): <input type="number" value=5 name="rateLimit" /><br>
+  <input type="submit" value="Create" />
+<ul>
+<li> 1 hour   = 3600</li>
+<li> 6 hours  = 21600</li>
+<li> 12 hours = 43200</li>
+<li> 24 hours = 86400</li>
+</ul>
+</form>
+<% if (newToken) { %>
+  <p>Just created <code><%= recentUsers[0].token %></code>.</p>
+<% } %>
+<h3>Recent Tokens</h2>
+<ul>
+  <% recentUsers.forEach(function(user) { %>
+  <li><a href="/admin/manage/view-user/<%= user.token %>"><%= user.token %></a></li>
+  <% }) %>
+</ul>
+<%- include("../_partials/admin-footer") %>

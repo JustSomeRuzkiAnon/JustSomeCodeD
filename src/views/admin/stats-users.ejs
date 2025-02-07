@@ -1,0 +1,259 @@
+<%- include("../_partials/admin-header", { title: "User Analytics" }) %>
+
+<h1>User Analytics</h1>
+<p>This dashboard shows the top 100 users for each model in order to detect any issues or abuse.
+   <br><em>Click on any bar to copy the token.</em>
+</p>
+
+<!-- Model selection dropdown -->
+<div style="text-align: center; margin-bottom: 20px;">
+  <label for="modelSelect">Select Model:</label>
+  <select id="modelSelect"></select>
+</div>
+
+<!-- New filter controls -->
+<div style="text-align: center; margin-bottom: 20px;">
+  <label for="userTypeSelect">User Type:</label>
+  <select id="userTypeSelect">
+    <option value="all">All</option>
+    <option value="normal">Normal</option>
+    <option value="temp">Temp</option>
+  </select>
+  &nbsp;&nbsp;
+  <label for="sortOrderSelect">Sort Order:</label>
+  <select id="sortOrderSelect">
+    <option value="desc">Most Used → Least Used</option>
+    <option value="asc">Least Used → Most Used</option>
+  </select>
+</div>
+
+<!-- Chart grid (two charts side by side) -->
+<div class="chart-grid">
+  <div class="chart-block">
+    <canvas id="tokenUsageChart" width="400" height="400"></canvas>
+  </div>
+  <div class="chart-block">
+    <canvas id="promptUsageChart" width="400" height="400"></canvas>
+  </div>
+</div>
+
+<!-- Load Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  // Base URL for fetching data
+  var url = window.location.origin;
+
+  // Global variables for our charts and analytics data
+  var tokenChart, promptChart;
+  var modelAnalytics = {};
+
+  // Create empty charts (we'll update their data later)
+  function createCharts() {
+    var ctxToken = document.getElementById('tokenUsageChart').getContext('2d');
+    tokenChart = new Chart(ctxToken, {
+      type: 'bar',
+      data: {
+        labels: [],
+        datasets: [{
+          label: 'Token Usage',
+          data: [],
+          backgroundColor: 'rgba(54,162,235,0.6)'
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          title: { display: true, text: 'Token Usage' }
+        },
+        scales: { y: { beginAtZero: true } }
+      }
+    });
+    
+    var ctxPrompt = document.getElementById('promptUsageChart').getContext('2d');
+    promptChart = new Chart(ctxPrompt, {
+      type: 'bar',
+      data: {
+        labels: [],
+        datasets: [{
+          label: 'Prompt Usage',
+          data: [],
+          backgroundColor: 'rgba(255,99,132,0.6)'
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          title: { display: true, text: 'Prompt Usage' }
+        },
+        scales: { y: { beginAtZero: true } }
+      }
+    });
+  }
+  
+  // Update the charts for a specific model (selected from the dropdown)
+  function updateChartsForModel(modelName) {
+    var usersData = modelAnalytics[modelName] || [];
+
+    // Read filtering and sort order selections.
+    var userTypeSelect = document.getElementById('userTypeSelect');
+    var sortOrderSelect = document.getElementById('sortOrderSelect');
+    var userTypeFilter = userTypeSelect ? userTypeSelect.value : 'all';
+    var sortOrder = sortOrderSelect ? sortOrderSelect.value : 'desc';
+    
+    // Filter by user type.
+    var filteredUsers = usersData.filter(function(u) {
+      return userTypeFilter === 'all' || u.type === userTypeFilter;
+    });
+    
+    // For token usage:
+    var sortedToken = filteredUsers.slice().sort(function(a, b) {
+      return sortOrder === 'desc' ? (b.tokenUsage - a.tokenUsage) : (a.tokenUsage - b.tokenUsage);
+    }).slice(0, 100);
+      
+    // For prompt usage:
+    var sortedPrompt = filteredUsers.slice().sort(function(a, b) {
+      return sortOrder === 'desc' ? (b.promptUsage - a.promptUsage) : (a.promptUsage - b.promptUsage);
+    }).slice(0, 100);
+    
+    // Prepare chart data arrays.
+    var tokenLabels = sortedToken.map(function(u) { return u.displayName; });
+    var tokenValues = sortedToken.map(function(u) { return u.tokenUsage; });
+    
+    var promptLabels = sortedPrompt.map(function(u) { return u.displayName; });
+    var promptValues = sortedPrompt.map(function(u) { return u.promptUsage; });
+    
+    // Update the token usage chart.
+    tokenChart.data.labels = tokenLabels;
+    tokenChart.data.datasets[0].data = tokenValues;
+    tokenChart.options.plugins.title.text = 'Top 100 Users Token Usage for ' + modelName;
+    tokenChart.update();
+    
+    // Update the prompt usage chart.
+    promptChart.data.labels = promptLabels;
+    promptChart.data.datasets[0].data = promptValues;
+    promptChart.options.plugins.title.text = 'Top 100 Users Prompt Usage for ' + modelName;
+    promptChart.update();
+  }
+  
+  // Fetch all user stats and build our per-model analytics data.
+  fetch(url + '/users-stats')
+    .then(function(response) {
+      return response.json();
+    })
+    .then(function(data) {
+      var allUsers = data.users || [];
+      
+      // For each user, extract per-model numbers.
+      allUsers.forEach(function(user) {
+        // Expect per-model count objects; if not present, use an empty object.
+        var tokenInputObj = user.allTokenCountInput || {};
+        var tokenOutputObj = user.allTokenCountOutput || {};
+        var promptObj = user.allPromptCount || {};
+        
+        // Get a complete set of model names from this user.
+        var userModels = new Set([
+          ...Object.keys(tokenInputObj),
+          ...Object.keys(tokenOutputObj),
+          ...Object.keys(promptObj)
+        ]);
+        
+        userModels.forEach(function(model) {
+          if (!modelAnalytics[model]) {
+            modelAnalytics[model] = [];
+          }
+          // For each model, combine token input and output as token usage.
+          var tokenUsage = (tokenInputObj[model] || 0) + (tokenOutputObj[model] || 0);
+          var promptUsage = (promptObj[model] || 0);
+          // Instead of using alias, we now display the token itself.
+          var displayName = user.token;
+          
+          // Include user's type for filtering.
+          modelAnalytics[model].push({
+            displayName: displayName,
+            tokenUsage: tokenUsage,
+            promptUsage: promptUsage,
+            type: user.type
+          });
+        });
+      });
+      
+      // Populate and sort the model select dropdown by aggregate token usage (most used to least used).
+      var modelSelect = document.getElementById('modelSelect');
+      modelSelect.innerHTML = '';
+      var sortedModels = Object.keys(modelAnalytics).sort(function(a, b) {
+         var totalA = modelAnalytics[a].reduce(function(sum, record) { return sum + record.tokenUsage; }, 0);
+         var totalB = modelAnalytics[b].reduce(function(sum, record) { return sum + record.tokenUsage; }, 0);
+         return totalB - totalA;
+      });
+      
+      sortedModels.forEach(function(model) {
+         var totalUsage = modelAnalytics[model].reduce(function(sum, record) { return sum + record.tokenUsage; }, 0);
+         var option = document.createElement('option');
+         option.value = model;
+         option.textContent = model + ' (Total Usage: ' + totalUsage + ')';
+         modelSelect.appendChild(option);
+      });
+      
+      // Initialize our charts.
+      createCharts();
+      
+      // Set default selection and update charts.
+      if (modelSelect.options.length > 0) {
+        var currentModel = modelSelect.options[0].value;
+        modelSelect.value = currentModel;
+        updateChartsForModel(currentModel);
+      }
+      
+      // Change charts when a different model is selected.
+      modelSelect.addEventListener('change', function() {
+        updateChartsForModel(this.value);
+      });
+      
+      // Add event listeners for user type and sort order controls.
+      document.getElementById('userTypeSelect').addEventListener('change', function() {
+        updateChartsForModel(document.getElementById('modelSelect').value);
+      });
+      document.getElementById('sortOrderSelect').addEventListener('change', function() {
+        updateChartsForModel(document.getElementById('modelSelect').value);
+      });
+
+      // -- COPY TOKEN ON CLICK EVENT HANDLERS --
+      // For Token Usage Chart
+      document.getElementById('tokenUsageChart').addEventListener('click', function(evt) {
+        var activePoints = tokenChart.getElementsAtEventForMode(evt, 'nearest', { intersect: true }, true);
+        if (activePoints.length > 0) {
+          var idx = activePoints[0].index;
+          var token = tokenChart.data.labels[idx];
+          navigator.clipboard.writeText(token)
+            .then(function() {
+              alert("Copied token: " + token);
+            })
+            .catch(function(err) {
+              console.error("Error copying token:", err);
+            });
+        }
+      });
+      
+      // For Prompt Usage Chart
+      document.getElementById('promptUsageChart').addEventListener('click', function(evt) {
+        var activePoints = promptChart.getElementsAtEventForMode(evt, 'nearest', { intersect: true }, true);
+        if (activePoints.length > 0) {
+          var idx = activePoints[0].index;
+          var token = promptChart.data.labels[idx];
+          navigator.clipboard.writeText(token)
+            .then(function() {
+              alert("Copied token: " + token);
+            })
+            .catch(function(err) {
+              console.error("Error copying token:", err);
+            });
+        }
+      });
+      
+    })
+    .catch(function(error) {
+      console.error("Error fetching users stats:", error);
+    });
+</script>
+
+<%- include("../_partials/admin-footer") %> 

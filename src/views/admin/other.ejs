@@ -1,0 +1,38 @@
+<%- include("../_partials/admin-header", { title: "View User - OAI Reverse Proxy Admin" }) %>
+<h2>Temporary Updates</h2>
+
+<a>Page:</a>
+<body>
+  <form action="/admin/manage/update-page" method="POST">
+     <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+    <input type="text" name="base64_page" placeholder="Enter base64 for page...">
+    <button type="submit">Update</button>
+  </form>
+</body>
+<a>Prompt Injections:</a>
+<body>
+  <form action="/admin/manage/update-promptinjections" method="POST">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+    <input type="text" name="base64_pinject" placeholder="Enter base64 for prompt injections...">
+    <button type="submit">Update</button>
+  </form>
+</body>
+<a>Unauthorized Response:</a>
+<body>
+  <form action="/admin/manage/update-unauthresponse" method="POST">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+    <input type="text" name="base64_unauthresponse" placeholder="Enter string for unauthorized response...">
+    <button type="submit">Update</button>
+  </form>
+</body>
+<a>Proxy Key (Won't work if not set to proxy_key):</a>
+<body>
+  <form action="/admin/manage/update-proxypass" method="POST">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+    <input type="text" name="proxy_password" placeholder="Enter string for new password...">
+    <button type="submit">Update</button>
+  </form>
+</body>
+
+
+<%- include("../_partials/admin-footer") %>

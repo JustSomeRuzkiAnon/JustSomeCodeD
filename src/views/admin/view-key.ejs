@@ -1,0 +1,181 @@
+<%- include("../_partials/admin-header", { title: "View Key - OAI Reverse Proxy Admin" }) %>
+<h1>View Key</h1>
+
+<script>
+
+function toggleExpand(timestamp) {
+    var expandDiv = document.getElementById('expand_' + timestamp);
+    if (expandDiv.style.display === 'none') {
+        expandDiv.style.display = 'block';
+    } else {
+        expandDiv.style.display = 'none';
+    }
+}
+</script>
+<style>
+  th:nth-child(n+1) {
+        background-color:#0a0a0a;
+    }
+
+	th.active {
+		background-color:#301934;
+	}
+
+	a:link {
+	  color: purple;
+	  text-decoration: none;
+	}
+
+	.edit:hover {
+		background-color:#1a1a1a;
+		cursor: pointer;
+	}
+
+	a:visited {
+	  color: pink;
+	  text-decoration: none;
+	}
+	th a:visited {
+	  color: white;
+	  text-decoration: none;
+	}
+	</style>
+<table class="table table-striped">
+  <thead>
+    <tr>
+	  <th style="width:32px;" scope="col">Edit</th>
+      <th scope="col">Key</th>
+      <th scope="col">Value</th>
+    </tr>
+  <tbody>
+	
+  
+  
+  
+    <tr>
+	  <th scope="row" style="width:32px;">&#9940;</th>
+      <th scope="row">Hash</th>
+      <td><%- key.hash; %></td>
+    <tr>
+	<tr>
+	  <th scope="row" style="width:32px;">&#9940;</th>
+      <th scope="row">Service</th>
+      <td><%- key.service; %></td>
+    <tr>
+	
+	<% if (key.service === 'openai') { %>
+      <tr>
+		  <th scope="row" style="width:32px;">&#9940;</th>
+		  <th scope="row">Org</th>
+		  <td><%- key.org; %></td>
+      </tr>
+    <% } %>
+	
+	<% if (key.service === 'openai') { %>
+      <tr>
+		  <th scope="row" style="width:32px;">&#9940;</th>
+		  <th scope="row">GPT-4-TURBO RPM</th>
+		  <td><%- key.RPM; %></td>
+      </tr>
+    <% } %>
+	
+	<% if (key.service === 'openai') { %>
+	  <tr>
+		<th scope="row" style="width:32px;">&#9940;</th>
+		<th scope="row">GPT-4-TURBO TPM</th>
+		<td><%- key.TPM; %></td>
+	  </tr>
+	  <% var tier_to_tpm_gpt4turbo = [
+		{ tier: "Custom", value: 3000000 },
+		{ tier: "Tier 5", value: 1500000 },
+		{ tier: "Tier 4", value: 800000 },
+		{ tier: "Tier 3", value: 600000 },
+		{ tier: "Tier 2", value: 450000 },
+		{ tier: "Tier 1", value: 300000 },
+		{ tier: "Tier 1 Old", value: 150000 },
+		{ tier: "Free", value: 0 }
+	  ]; %>
+	  <% var tier = tier_to_tpm_gpt4turbo.find(function(item) { return item.value === parseInt(key.TPM, 10); }); %>
+	  <tr>
+		<th scope="row" style="width:32px;">&#9940;</th>
+		<th scope="row">Tier</th>
+		<td><%- tier ? tier.tier : 'Unknown' %></td>
+	  </tr>
+	<% } %>
+	
+	<% if (key.service === 'anthropic') { %>
+      <tr>
+		  <th scope="row" style="width:32px;">&#9940;</th>
+		  <th scope="row">AWS</th>
+		  <td><%- key.isAws; %></td>
+      </tr>
+    <% } %>
+
+	<tr>
+	  <th scope="row" style="width:32px;">&#9940;</th>
+      <th scope="row">Prompt Count</th>
+      <td><%- key.promptCount; %></td>
+    <tr>
+	<tr>
+	  <th scope="row" style="width:32px;">&#9940;</th>
+      <th scope="row">Rate Limited At</th>
+      <td><%- key.rateLimitedAt; %></td>
+    <tr>
+	<tr>
+	  <th scope="row" style="width:32px;">&#9940;</th>
+      <th scope="row">Rate Limit Request Reset</th>
+      <td><%- key.rateLimitRequestsReset; %></td>
+    <tr>
+</tr>
+	
+  </tbody>
+</table>
+
+<script>
+
+
+const editBtns = document.querySelectorAll('th.edit');
+editBtns.forEach(btn => {
+  btn.addEventListener('click', e => {
+    e.preventDefault();
+
+  });
+
+});
+
+
+var editElements = document.querySelectorAll(".edit");
+
+editElements.forEach(function(element) {
+  element.addEventListener("click", function() {
+    var keyValue = "<%- key.hash; %>";
+	
+	
+	var trElement = element.closest("tr"); // Find the closest 'tr' element
+    var thElement = trElement.querySelector("th[scope=row]");
+    var tdElement = trElement.querySelector("td");
+	
+	var _e = thElement.nextElementSibling.textContent;
+	var _v = prompt("(Don't do it, if you don't know what you are doing ._.) Enter the new value for "+_e+":");
+	
+	
+	
+    fetch("/admin/manage/edit-user/" + keyValue, {
+      method: "POST",
+      credentials: "same-origin",
+      body: JSON.stringify({
+        _csrf: document
+          .querySelector("meta[name=csrf-token]")
+          .getAttribute("content"),
+		toEdit: _e,
+        valueOfEdit: _v
+		  
+      }),
+      headers: { "Content-Type": "application/json" },
+    }).then(function() {
+      window.location.reload();
+    });
+  });
+});
+</script>
+<%- include("../_partials/admin-footer") %>

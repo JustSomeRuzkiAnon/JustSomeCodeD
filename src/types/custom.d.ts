@@ -1,0 +1,34 @@
+import { Express } from "express-serve-static-core";
+import { AIService, Key } from "../key-management/index";
+import { User } from "../proxy/auth/user-store";
+import type { HttpRequest } from "@smithy/types";
+
+
+declare global {
+  namespace Express {
+    interface Request {
+      key?: Key;
+      /** Denotes the format of the user's submitted request. */
+      inboundApi: AIService | "kobold";
+      /** Denotes the format of the request being proxied to the API. */
+      outboundApi: AIService;
+      /** If the request comes from a RisuAI.xyz user, this is their token. */
+      risuToken?: string;
+      user?: User;
+      isStreaming?: boolean;
+      startTime: number;
+      retryCount: number;
+      queueOutTime?: number;
+      onAborted?: () => void;
+      proceed: () => void;
+      heartbeatInterval?: NodeJS.Timeout;
+      monitorInterval?: NodeJS.Timeout;
+      promptTokens?: number;
+      outputTokens?: number;
+      // TODO: remove later
+      debug: Record<string, any>;
+	  newRequest: HttpRequest;
+	  signedRequest: HttpRequest;
+    }
+  }
+}

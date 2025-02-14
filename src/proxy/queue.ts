@@ -310,7 +310,7 @@ function processQueue() {
 
   const google20ProLockout = keyPool.getLockoutPeriod("gemini-2.0-pro-exp");
   const googleThinkingLockout = keyPool.getLockoutPeriod("gemini-2.0-flash-thinking-exp");
-  const googleExpLockout = keyPool.getLockoutPeriod("gemini-exp-1206");
+  const googleExpLockout = google20ProLockout;
   const google15Lockout = keyPool.getLockoutPeriod("gemini-1.5-pro");
   const googleFlashLockout = keyPool.getLockoutPeriod("gemini-1.5-flash");
   const google20FlashLockout = keyPool.getLockoutPeriod("gemini-2.0-flash");

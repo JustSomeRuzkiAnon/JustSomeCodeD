@@ -77,11 +77,6 @@ const rewriteDeepseekRequest = (
   delete req.body.top_logprobs
   
   if (req.body.model.includes("reasoner")) {
-    delete req.body.top_p
-    delete req.body.presence_penalty
-    delete req.body.frequency_penalty
-    delete req.body.temperature
-  
 
   if (Array.isArray(req.body.messages)) {
   
@@ -121,16 +116,26 @@ const rewriteDeepseekRequest = (
     ];
    }
 
-  // Auto prefix 
+	
+  // Auto prefix + reasoning content 
   if (Array.isArray(req.body.messages) && req.body.messages.length > 0) {
     const lastMessage = req.body.messages[req.body.messages.length - 1];
     if (lastMessage.role === "assistant") {
+	  if (lastMessage.content.includes("</reasoning_content>")) {
+		  const thoughtArray = lastMessage.content.split("</reasoning_content>")
+		  if (thoughtArray[0].strip().startsWith("<thoreasoning_contentught>")) {
+			lastMessage.reasoning_content = thoughtArray[0].slice(9)
+		  } else {
+			lastMessage.reasoning_content = thoughtArray[0]
+		  }
+		  lastMessage.content = thoughtArray[1]
+	  }
       lastMessage.prefix = true;
     }
   }
 
   }
-	  
+
 
   const rewriterPipeline = [
     addKey,

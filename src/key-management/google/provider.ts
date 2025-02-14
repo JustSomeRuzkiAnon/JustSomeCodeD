@@ -25,22 +25,23 @@ export const GOOGLE_SUPPORTED_MODELS = [
   "gemini-1.5-flash-001",
   "gemini-1.5-flash-002",
   "gemini-1.5-flash",
-  "gemini-1.5-pro-exp-0801",
-  "gemini-1.5-pro-exp-0827",
-  "gemini-1.5-flash-exp-0827",
-  "gemini-1.5-flash-8b-exp-0827",
-  "gemini-1.5-flash-8b-exp-0924",
+  // "gemini-1.5-pro-exp-0801",
+  // "gemini-1.5-pro-exp-0827",
+  // "gemini-1.5-flash-exp-0827",
+  //"gemini-1.5-flash-8b-exp-0827",
+  //"gemini-1.5-flash-8b-exp-0924",
   "gemini-1.5-flash-8b-latest",
-  "gemini-exp-1114",
-  "gemini-exp-1121",
-  "gemini-exp-1206",
+  // "gemini-exp-1114",
+  // "gemini-exp-1121",
+  // "gemini-exp-1206", removed not needed routes to 2.0 pro exp
   "learnlm-1.5-pro-experimental",
   "gemini-2.0-flash-lite-preview",
   "gemini-2.0-flash-lite-preview-02-05",
   "gemini-2.0-flash-exp",
+  "gemini-2.0-flash-001",
   "gemini-2.0-flash",
   "gemini-2.0-flash-thinking-exp-01-21",
-  "gemini-2.0-flash-thinking-exp-1219",
+  // "gemini-2.0-flash-thinking-exp-1219",
   "gemini-2.0-flash-thinking-exp",
   "gemini-2.0-pro-exp",
   "gemini-2.0-pro-exp-02-05"
@@ -201,15 +202,7 @@ export class GoogleKeyProvider implements KeyProvider<GoogleKey> {
 		
  
 
-		const GoogleExp = await (async () => { 
-			try { 
-				const responseExp = await axios.post(config.googleProxy+'/v1beta/models/gemini-exp-1206:generateContent', payload, { headers: { 'content-type': 'application/json', 'x-goog-api-key': key.key } }); 
-				const checkExp = responseExp.data && responseExp.data["candidates"] || false// Just for check if it doesn't find it, it will raise catch. 
-				if (checkExp) {
-					key.hasQuotaExp = true 
-				} 
-			} catch { return false } 
-		})();
+
 		
 		
 		const GoogleFlash = await (async () => { 
@@ -244,7 +237,7 @@ export class GoogleKeyProvider implements KeyProvider<GoogleKey> {
 		
 		const Google20Flash = await (async () => { 
 			try { 
-				const response20Flash = await axios.post(config.googleProxy+'/v1beta/models/gemini-2.0-flash-exp:generateContent', payload, { headers: { 'content-type': 'application/json', 'x-goog-api-key': key.key } }); 
+				const response20Flash = await axios.post(config.googleProxy+'/v1beta/models/gemini-2.0-flash:generateContent', payload, { headers: { 'content-type': 'application/json', 'x-goog-api-key': key.key } }); 
 				const check20Flash = response20Flash.data && response20Flash.data["candidates"] || false// Just for check if it doesn't find it, it will raise catch. 
 				if (check20Flash) {
 					key.hasQuota20Flash = true 
@@ -268,6 +261,7 @@ export class GoogleKeyProvider implements KeyProvider<GoogleKey> {
 				const checkGoogle20Pro = responseGoogle20Pro.data && responseGoogle20Pro.data["candidates"] || false// Just for check if it doesn't find it, it will raise catch. 
 				if (checkGoogle20Pro) {
 					key.hasQuota20Pro = true 
+					key.hasQuotaExp = true 
 				} 
 			} catch { return false } 
 		})();

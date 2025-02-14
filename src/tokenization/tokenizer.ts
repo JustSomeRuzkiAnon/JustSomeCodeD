@@ -24,7 +24,7 @@ export async function init() {
   if (config.anthropicKey) {
     initClaude();
   }
-  if (config.openaiKey || config.mistralKey || config.grokKey) {
+  if (config.openaiKey || config.mistralKey || config.grokKey || config.deepseekKey || config.cohereKey) {
     initOpenAi();
   }
   

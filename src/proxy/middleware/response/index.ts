@@ -610,7 +610,7 @@ function handleGoogleRateLimitError(
 ) {
 
 
-  if (errorPayload.error?.status === "RESOURCE_EXHAUSTED") {
+  if (errorPayload.error?.status === "RESOURCE_EXHAUSTED" || errorPayload.error?.reason ==="API_KEY_INVALID") {
 	if (req.body.model.includes("gemini-exp")) {
 		keyPool.update(req.key!, { hasQuotaExp: false });
 		errorPayload.proxy_note = `Assigned Gemini Experimental key's quota has been exceeded, just don't panic and try again or lower your context size.`;

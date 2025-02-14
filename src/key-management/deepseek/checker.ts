@@ -194,8 +194,7 @@ export class DeepseekKeyChecker {
   private handleAxiosError(key: DeepseekKey, error: AxiosError) {
     if (error.response && DeepseekKeyChecker.errorIsDeepseekError(error)) {
       const { status, data } = error.response;
-		  if (status === 401) {
-			if (key.key.includes(";") == false) {
+		  if (status === 401 || status === 402) {
 			this.log.warn(
 			  { key: key.hash, error: data },
 			  "Key is invalid or revoked. Disabling key."
@@ -204,7 +203,6 @@ export class DeepseekKeyChecker {
 			  isDisabled: true,
 			  isRevoked: true
 			});
-		}
       } else if (status === 429) {
         switch (data.error.type) {
           case "insufficient_quota":
@@ -301,23 +299,17 @@ export class DeepseekKeyChecker {
 			"Authorization": `Bearer ${key.key}`,
 			"Content-Type": 'application/json',
 	},
-		validateStatus: (status) => status === 400,
+		validateStatus: (status) => status === 200,
 		timeout: 60000
 	  },
   
 	);
+	
+	
 	const rateLimitHeader = headers["x-ratelimit-limit"];
 	const rateLimit = parseInt(rateLimitHeader) || 14400;
 	
 
-
-	// invalid_request_error is the expected error
-	if (data.error.type !== "invalid_request_error") {
-	  this.log.warn(
-		{ key: key.hash, error: data },
-		"Unexpected 400 error class while checking key; assuming key is valid, but this may indicate a change in the API."
-	  );
-	}
 	return { rateLimit };
 
   }

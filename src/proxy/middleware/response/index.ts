@@ -141,6 +141,11 @@ export function reenqueueRequest(req: Request) {
     `Re-enqueueing request due to retryable error`
   );
   req.retryCount++;
+
+  // Reset URL and any flags that might have been modified
+  req.url = req.originalUrl || req.url;
+  req.isStreaming = req.body?.stream === "true" || req.body?.stream === true;
+
   enqueue(req);
 }
 
@@ -503,7 +508,7 @@ const handleUpstreamErrors: ProxyResHandlerWithBody = async (
     throw new RetryableError("Rate-limited request re-enqueued.");
   } else if (statusCode === 429) {
     // OpenAI uses this for a bunch of different rate-limiting scenarios.
-    if (req.outboundApi === "openai") {
+    if (req.outboundApi === "openai" || req.outboundApi === "together") {
       handleOpenAIRateLimitError(req, tryAgainMessage, errorPayload);
     } else if (req.outboundApi === "anthropic") {
       handleAnthropicRateLimitError(req, errorPayload);
@@ -660,7 +665,7 @@ function handleOpenAIRateLimitError(
     // Billing is not active (key is dead, disable it)
     keyPool.disable(req.key!, "revoked");
     errorPayload.proxy_note = `Assigned key was deactivated by OpenAI. ${tryAgainMessage}`;
-  } else if (type === "requests" || type === "tokens" || type === undefined) {
+  } else if (type === "requests" || type === "tokens" || type === undefined || type === "model_rate_limit") {
     // Per-minute request or token rate limit is exceeded, which we can retry
     keyPool.markRateLimited(req.key!);
     // I'm aware this is confusing -- throwing this class of error will cause

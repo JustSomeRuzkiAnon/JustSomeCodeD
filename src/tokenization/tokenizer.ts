@@ -48,6 +48,7 @@ type TokenCountRequest = {
   | { prompt: OpenAIPromptMessage[]; service: "cohere" }
   | { prompt: OpenAIPromptMessage[]; service: "openai" }
   | { prompt: OpenAIPromptMessage[]; service: "mistral" }
+  | { prompt: OpenAIPromptMessage[]; service: "together" }
   
 );
 export async function countTokens({
@@ -78,6 +79,11 @@ export async function countTokens({
         tokenization_duration_ms: getElapsedMs(time),
       };
 	case "deepseek":
+      return {
+        ...getOpenAITokenCount(prompt, req.body.model),
+        tokenization_duration_ms: getElapsedMs(time),
+      };
+	case "together":
       return {
         ...getOpenAITokenCount(prompt, req.body.model),
         tokenization_duration_ms: getElapsedMs(time),

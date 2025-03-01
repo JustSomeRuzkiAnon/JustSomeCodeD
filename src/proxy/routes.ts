@@ -16,6 +16,7 @@ import { grok, grokVariants } from "./grok";
 import { mistral, mistralVariants } from "./mistral";
 import { deepseek, deepseekVariants } from "./deepseek";
 import { cohere, cohereVariants } from "./cohere";
+import { together, togetherVariants } from "./together";
 import { config } from "../config"; 
 
 const proxyRouter = express.Router();
@@ -43,7 +44,7 @@ proxyRouter.use("/grok", grok);
 proxyRouter.use("/deepseek", deepseek);
 proxyRouter.use("/cohere", cohere);
 proxyRouter.use("/mistral", mistral);
-
+proxyRouter.use("/together", together);
 
 
 
@@ -73,6 +74,7 @@ const modelVariantHandlers = {
   ...Object.fromEntries(googleVariants.map(variant => [variant, google])),
   ...Object.fromEntries(deepseekVariants.map(variant => [variant, deepseek])),
   ...Object.fromEntries(cohereVariants.map(variant => [variant, cohere])),
+  ...Object.fromEntries(togetherVariants.map(variant => [variant, together])),
 };
 
 
@@ -118,7 +120,7 @@ proxyRouter.post(/^(\/v1|\/v1beta|\/v1alpha|\/beta)?\/((chat\/completions|comple
 });
 
 
-streamRouter.post(/^(\/v1|\/v1beta|\/v1alpha)?\/((chat\/completions|complete|messages|embeddings|images\/generations|audio\/speech)|models\/([^\/]+)(\:generateContent|\:streamGenerateContent))?(\?key=([^"&\s]+))?$/, (req, res, next) => {
+streamRouter.post(/^(\/v1|\/v1beta|\/v1alpha|\/beta)?\/((chat\/completions|complete|messages|embeddings|images\/generations|audio\/speech)|models\/([^\/]+)(\:generateContent|\:streamGenerateContent))?(\?key=([^"&\s]+))?$/, (req, res, next) => {
   req.body.stream = true;
   const { model } = req.body;
   
@@ -191,7 +193,10 @@ if (config.grokKey) {
 if (config.mistralKey) {
   allModels.push(...mistralVariants);
 }
-  
+
+if (config.togetherKey) {
+  allModels.push(...togetherVariants);
+}  
   
 const getModelsResponse = () => {
   if (new Date().getTime() - modelsCacheTime < 1000 * 60) {
@@ -202,7 +207,7 @@ const getModelsResponse = () => {
     id,
     object: "model",
     created: new Date().getTime(),
-    owned_by: id.includes('claude') ? 'anthropic' : id.includes('gpt') || id.includes('mistral') ? 'mistralai' : 'gemini' ||  id.includes('gemini') ? 'openai' : 'ai21' || id.includes('grok') ? 'openai' : 'grok' || id.includes('deepseek') ? 'openai' : 'deepseek' || id.includes('cohere') ? 'openai' : 'cohere',
+    owned_by: id.includes('claude') ? 'anthropic' : id.includes('gpt') || id.includes('mistral') ? 'mistralai' : 'gemini' ||  id.includes('gemini') ? 'openai' : 'ai21' || id.includes('grok') ? 'openai' : 'grok' || id.includes('deepseek') ? 'openai' : 'deepseek' || id.includes('cohere') ? 'openai' : 'cohere' || id.includes('together') ? 'openai' : 'together',
 	capabilities: {
 		completion_chat: true,
 	},

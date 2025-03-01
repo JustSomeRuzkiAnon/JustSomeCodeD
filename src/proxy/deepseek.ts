@@ -123,7 +123,7 @@ const rewriteDeepseekRequest = (
     if (lastMessage.role === "assistant") {
 	  if (lastMessage.content.includes("</reasoning_content>")) {
 		  const thoughtArray = lastMessage.content.split("</reasoning_content>")
-		  if (thoughtArray[0].strip().startsWith("<thoreasoning_contentught>")) {
+		  if (thoughtArray[0].strip().startsWith("<reasoning_content>")) {
 			lastMessage.reasoning_content = thoughtArray[0].slice(9)
 		  } else {
 			lastMessage.reasoning_content = thoughtArray[0]

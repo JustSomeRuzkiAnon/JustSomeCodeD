@@ -43,6 +43,9 @@ export const gptVariants = [
 	"o3-mini-2025-01-31",
 	
 
+  "gpt-4.5-preview-2025-02-27",
+  "gpt-4.5-preview",
+
 	"gpt-4o-mini",
 	"gpt-4o-mini-2024-07-18",
 	"gpt-4o",

@@ -69,7 +69,6 @@ export interface GoogleKey extends Key {
   rateLimitedUntil: number;
   isRevoked: boolean;
   hasQuotaFlash: boolean;
-  hasQuota10: boolean;
   hasQuota15: boolean;
   hasQuota20Flash: boolean;
   hasQuotaExp: boolean;
@@ -115,7 +114,6 @@ export class GoogleKeyProvider implements KeyProvider<GoogleKey> {
 		isRevoked: false, 
 		
 		hasQuotaFlash: false,
-		hasQuota10: false,
 		hasQuota15: false,
 		hasQuota20Flash: false,
     hasQuota20Pro: false,
@@ -171,7 +169,6 @@ export class GoogleKeyProvider implements KeyProvider<GoogleKey> {
 		isRevoked: false,
 
 		hasQuotaFlash: false,
-		hasQuota10: false,
 		hasQuota15: false,
 		hasQuota20Flash: false,
     hasQuota20Pro: false,
@@ -225,16 +222,6 @@ export class GoogleKeyProvider implements KeyProvider<GoogleKey> {
 			} catch { return false } 
 		})();
 		
-		const Google10 = await (async () => { 
-			try { 
-				const response10 = await axios.post(config.googleProxy+'/v1beta/models/gemini-1.0-pro-latest:generateContent', payload, { headers: { 'content-type': 'application/json', 'x-goog-api-key': key.key } }); 
-				const check10 = response10.data && response10.data["candidates"] || false// Just for check if it doesn't find it, it will raise catch. 
-				if (check10) {
-					key.hasQuota10 = true 
-				} 
-			} catch { return false } 
-		})();
-		
 		const Google20Flash = await (async () => { 
 			try { 
 				const response20Flash = await axios.post(config.googleProxy+'/v1beta/models/gemini-2.0-flash:generateContent', payload, { headers: { 'content-type': 'application/json', 'x-goog-api-key': key.key } }); 
@@ -278,7 +265,7 @@ export class GoogleKeyProvider implements KeyProvider<GoogleKey> {
 		})();
 		
 		
-		if (key.hasQuota10 == false && key.hasQuotaExp == false && key.hasQuota15 == false && key.hasQuotaFlash == false && key.hasQuota20Flash == false && key.hasQuotaThinking == false && key.hasQuota20Pro == false && key.hasQuotaFlashLite == false) {
+		if (key.hasQuota15 == false && key.hasQuotaExp == false && key.hasQuota20Flash == false && key.hasQuotaThinking == false && key.hasQuota20Pro == false && key.hasQuotaFlashLite == false) {
 			key.isRevoked = true;
 		}
 		
@@ -305,15 +292,13 @@ export class GoogleKeyProvider implements KeyProvider<GoogleKey> {
 		filteredKeys = filteredKeys.filter((k) => !k.isDisabled && !k.isRevoked && k.hasQuotaExp);
 	} else if (_model.includes("1.5")) {
 		filteredKeys = filteredKeys.filter((k) => !k.isDisabled && !k.isRevoked && k.hasQuota15);
-	} else if (_model.includes("1.0")) {
-		filteredKeys = filteredKeys.filter((k) => !k.isDisabled && !k.isRevoked && k.hasQuota10);
 	} else if (_model.includes("flash-lite")) {
 		filteredKeys = filteredKeys.filter((k) => !k.isDisabled && !k.isRevoked && k.hasQuotaFlashLite);
 	} else if (_model.includes("2.0-pro")) {
 		filteredKeys = filteredKeys.filter((k) => !k.isDisabled && !k.isRevoked && k.hasQuota20Pro);
 	} else if (_model.includes("2.0-flash")) {
 		filteredKeys = filteredKeys.filter((k) => !k.isDisabled && !k.isRevoked && k.hasQuota20Flash);
-	}else if (_model.includes("flash")) {
+	} else if (_model.includes("flash")) {
 		filteredKeys = filteredKeys.filter((k) => !k.isDisabled && !k.isRevoked && k.hasQuotaFlash);
 	}
 	const availableKeys = filteredKeys 

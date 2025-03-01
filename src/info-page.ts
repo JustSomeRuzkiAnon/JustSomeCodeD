@@ -271,13 +271,10 @@ function getGoogleInfo() {
   const keys = keyPool.list().filter((k) => k.service === "google");
   googleInfo.activeKeys = Math.min(keys.filter((k) => !k.isDisabled && !k.isRevoked).length, 1);
   googleInfo.hasQuotaFlash = Math.min(keys.filter((k) => !k.isDisabled && !k.isRevoked && k.hasQuotaFlash).length, 1);
-  googleInfo.hasQuota10 = Math.min(keys.filter((k) => !k.isDisabled && !k.isRevoked && k.hasQuota10).length, 1);
   googleInfo.hasQuota15 = Math.min(keys.filter((k) => !k.isDisabled && !k.isRevoked && k.hasQuota15).length, 1);
   googleInfo.hasQuota20Flash = Math.min(keys.filter((k) => !k.isDisabled && !k.isRevoked && k.hasQuota20Flash).length, 1);
   googleInfo.hasQuotaThinking = Math.min(keys.filter((k) => !k.isDisabled && !k.isRevoked && k.hasQuotaThinking).length, 1);
   googleInfo.hasQuotaExp = Math.min(keys.filter((k) => !k.isDisabled && !k.isRevoked && k.hasQuotaExp).length, 1);
-
-
   googleInfo.revokedKeys = Math.min(keys.filter((k) => k.isRevoked).length, 1);
   if (config.queueMode !== "none") {
     const ExpQueue = getQueueInformation("google-exp");

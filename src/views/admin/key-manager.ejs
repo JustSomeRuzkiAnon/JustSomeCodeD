@@ -169,6 +169,12 @@ function updateStats(prov) {
 <% let countGpt432k = 0; %>
 <% let countGpt3 = 0; %>
 
+<% let countGoogleQuotaFlash = 0; %>
+<% let countGoogleQuota15 = 0; %>
+<% let countGoogleQuota20Flash = 0; %>
+<% let countGoogleQuotaThinking = 0; %>
+<% let countGoogleQuotaExp = 0; %>
+
 <% keys.forEach(function(key) { %>
 
   <% if (key.hash.includes("oai-")) { %>
@@ -229,6 +235,21 @@ function updateStats(prov) {
 	  <% } %>
 	  <% if (key.isRevoked == false) { %>
 		<% countGoogle++; %>
+		<% if (key.hasQuotaFlash) { %>
+		   <% countGoogleQuotaFlash++; %>
+		<% } %>
+		<% if (key.hasQuota15) { %>
+		   <% countGoogleQuota15++; %>
+		<% } %>
+		<% if (key.hasQuota20Flash) { %>
+		   <% countGoogleQuota20Flash++; %>
+		<% } %>
+		<% if (key.hasQuotaThinking) { %>
+		   <% countGoogleQuotaThinking++; %>
+		<% } %>
+		<% if (key.hasQuotaExp) { %>
+		   <% countGoogleQuotaExp++; %>
+		<% } %>
 	  <% } %>
   <% } %>
   
@@ -239,7 +260,9 @@ function updateStats(prov) {
   
 <% }); %>
 
-
+<% 
+  const totalRevoked = countRevoked + countRevokedGoogle + countRevokedAnthropic + countRevokedGrok + countRevokedMistral + countRevokedDeepseek; 
+%>
 
 <hr>
 <center><h1>Key Manager</h1></center>
@@ -326,7 +349,12 @@ Number of revoked keys: <span style="color: <%= countRevokedAnthropic > 0 ? 'gre
 </div>
 <div id="statsGoogle" hidden>
 <center>
-Number of active keys: <span style="color: <%= countGoogle > 0 ? 'green' : 'red' %>"><%= countGoogle %></span>
+Number of active keys: <span style="color: <%= countGoogle > 0 ? 'green' : 'red' %>"><%= countGoogle %></span><br>
+Number of keys with Quota Flash: <span style="color: <%= countGoogleQuotaFlash > 0 ? 'green' : 'red' %>"><%= countGoogleQuotaFlash %></span><br>
+Number of keys with Quota 15: <span style="color: <%= countGoogleQuota15 > 0 ? 'green' : 'red' %>"><%= countGoogleQuota15 %></span><br>
+Number of keys with Quota 20 Flash: <span style="color: <%= countGoogleQuota20Flash > 0 ? 'green' : 'red' %>"><%= countGoogleQuota20Flash %></span><br>
+Number of keys with Quota Thinking: <span style="color: <%= countGoogleQuotaThinking > 0 ? 'green' : 'red' %>"><%= countGoogleQuotaThinking %></span><br>
+Number of keys with Quota Exp: <span style="color: <%= countGoogleQuotaExp > 0 ? 'green' : 'red' %>"><%= countGoogleQuotaExp %></span><br>
 Number of revoked keys: <span style="color: <%= countRevokedGoogle > 0 ? 'green' : 'red' %>"><%= countRevokedGoogle %></span>
 </center>
 </div>
@@ -366,7 +394,7 @@ Number of revoked keys: <span style="color: <%= countRevokedDeepseek > 0 ? 'gree
 
 <form action="/admin/manage/delete-revoked-keys" method="POST">
   <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
-  <button type="submit" onclick="return confirm('Are you sure you want to remove all <%= countRevoked %> revoked keys?')">Remove All Revoked Keys</button>
+  <button type="submit" onclick="return confirm('Are you sure you want to remove all <%= totalRevoked %> revoked keys?')">Remove All Revoked Keys</button>
 </form>
 
 <form action="/admin/manage/delete-outofquota-keys" method="POST">

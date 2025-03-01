@@ -16,9 +16,9 @@ export const finalizeBody: ProxyRequestMiddleware = (proxyReq, req) => {
 	if (req.body.model.startsWith("dall-")) {
 		delete req.body["stream"] // idk why 
 	}
+	
+	
 
-	
-	
 	let updatedBody = JSON.stringify(req.body);
 	
 	

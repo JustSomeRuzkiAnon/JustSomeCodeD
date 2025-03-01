@@ -35,13 +35,18 @@ import {
 } from "./cohere/provider";
 
 
+import {
+  Together_SUPPORTED_MODELS,
+  TogetherModel,
+} from "./together/provider";
+
 
 
 
 import { KeyPool } from "./key-pool";
 
-export type AIService = "openai" | "anthropic" | "google" | "ai21" | "grok" | "mistral" | "deepseek" | "cohere" | "replicate";
-export type Model = OpenAIModel | AnthropicModel | GoogleModel  | Ai21Model | GrokModel | MistralModel | DeepseekModel | CohereModel;
+export type AIService = "openai" | "anthropic" | "google" | "ai21" | "grok" | "mistral" | "deepseek" | "cohere" | "replicate" | "together";
+export type Model = OpenAIModel | AnthropicModel | GoogleModel  | Ai21Model | GrokModel | MistralModel | DeepseekModel | CohereModel | TogetherModel;
 
 export interface Key {
   /** The API key itself. Never log this, use `hash` instead. */
@@ -135,10 +140,11 @@ export const SUPPORTED_MODELS = [
   ...Grok_SUPPORTED_MODELS,
   ...MISTRAL_SUPPORTED_MODELS,
   ...Deepseek_SUPPORTED_MODELS,
-  ...Cohere_SUPPORTED_MODELS
+  ...Cohere_SUPPORTED_MODELS,
+  ...Together_SUPPORTED_MODELS
 ] as const;
 export type SupportedModel = (typeof SUPPORTED_MODELS)[number];
-export { OPENAI_SUPPORTED_MODELS, ANTHROPIC_SUPPORTED_MODELS, AI21_SUPPORTED_MODELS, GOOGLE_SUPPORTED_MODELS, Grok_SUPPORTED_MODELS, MISTRAL_SUPPORTED_MODELS, Deepseek_SUPPORTED_MODELS, Cohere_SUPPORTED_MODELS};
+export { OPENAI_SUPPORTED_MODELS, ANTHROPIC_SUPPORTED_MODELS, AI21_SUPPORTED_MODELS, GOOGLE_SUPPORTED_MODELS, Grok_SUPPORTED_MODELS, MISTRAL_SUPPORTED_MODELS, Deepseek_SUPPORTED_MODELS, Cohere_SUPPORTED_MODELS, Together_SUPPORTED_MODELS};
 export { AnthropicKey } from "./anthropic/provider";
 export { OpenAIKey } from "./openai/provider";
 export { GoogleKey } from "./google/provider";
@@ -147,3 +153,4 @@ export { GrokKey } from "./grok/provider";
 export { MistralKey } from "./mistral/provider";
 export { DeepseekKey } from "./deepseek/provider";
 export { CohereKey } from "./cohere/provider";
+export { TogetherKey } from "./together/provider";

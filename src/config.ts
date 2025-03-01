@@ -45,6 +45,9 @@ type Config = {
   
   /** Comma-delimited list of Mistral API keys  */
   mistralKey?: string;
+  
+  
+  togetherKey?: string;
 
   /** Required for dall-e gens */
   imgBBKey?: string; 
@@ -175,6 +178,7 @@ export const config: Config = {
   ImageExpiry: getEnvWithDefault("IMAGE_EXPIRY", 604800),
   
   mistralKey: getEnvWithDefault("MISTRAL_KEY", ""),
+  togetherKey: getEnvWithDefault("TOGETHER_KEY", ""),
   page_body: atob(getEnvWithDefault("PAGE_BODY", "YDwhRE9DVFlQRSBodG1sPgo8aHRtbCBsYW5nPSJlbiI+CiAgPGhlYWQ+CiAgICA8bWV0YSBjaGFyc2V0PSJ1dGYtOCIgLz4KICAgIDxtZXRhIG5hbWU9InJvYm90cyIgY29udGVudD0ibm9pbmRleCIgLz4KICAgIDx0aXRsZT57dGl0bGV9PC90aXRsZT4KICA8L2hlYWQ+CiAgPGJvZHkgc3R5bGU9ImZvbnQtZmFtaWx5OiBzYW5zLXNlcmlmOyBiYWNrZ3JvdW5kLWNvbG9yOiAjZjBmMGYwOyBwYWRkaW5nOiAxZW07Ij4KICAgIHtoZWFkZXJIdG1sfQogICAgPGhyIC8+CiAgICA8aDI+U2VydmljZSBJbmZvPC9oMj4KICAgIDxwcmU+e0pTT059PC9wcmU+CiAgPC9ib2R5PgogIDxiIGlkPSJ1YyI+CiAgPGEgaHJlZj0iL3VzZXIvbG9naW4iIHRhcmdldD0iX2JsYW5rIiBzdHlsZT0iYmFja2dyb3VuZC1jb2xvcjogIzRDQUY1MDtib3JkZXI6IG5vbmU7Y29sb3I6IHdoaXRlO3BhZGRpbmc6IDE1cHggMzJweDt0ZXh0LWFsaWduOiBjZW50ZXI7dGV4dC1kZWNvcmF0aW9uOiBub25lO2Rpc3BsYXk6IGlubGluZS1ibG9jaztmb250LXNpemU6IDE2cHg7bWFyZ2luOiA0cHggMnB4O2N1cnNvcjogcG9pbnRlcjsiIGhpZGRlbj5DaGVjayB1c2VyX3Rva2VuPC9hPgogIDwvYj4KICA8c2NyaXB0PgogIGxldCBnYXRla2VlcGVyID0gIntjb25maWc6Z2F0ZWtlZXBlcn0iCiAgaWYgKGdhdGVrZWVwZXIgPT0gInVzZXJfdG9rZW4iKSB7CiAgICBkb2N1bWVudC5nZXRFbGVtZW50QnlJZCgidWMiKS5oaWRkZW4gPSBmYWxzZTsKICB9CiAgPC9zY3JpcHQ+CjwvaHRtbD5gCg==")),
   promptInjections: JSON.parse(atob(getEnvWithDefault("PROMPT_INJECTIONS", "e30="))),
   googleProxy: atob(getEnvWithDefault("GOOGLE_PROXY", "aHR0cHM6Ly9nZW5lcmF0aXZlbGFuZ3VhZ2UuZ29vZ2xlYXBpcy5jb20=")),
@@ -314,6 +318,7 @@ export const OMITTED_KEYS: (keyof Config)[] = [
   "deepseekKey",
   "cohereKey",
   "mistralKey",
+  "togetherKey",
   "anthropicKey",
   "proxyKey",
   "adminKey",
@@ -354,7 +359,7 @@ function getEnvWithDefault<T>(name: string, defaultValue: T): T {
     return defaultValue;
   }
   try {
-    if (name === "OPENAI_KEY" || name === "ANTHROPIC_KEY" || name === "GOOGLE_KEY") {
+    if (name === "OPENAI_KEY" || name === "ANTHROPIC_KEY" || name === "GOOGLE_KEY" || name === "TOGETHER_KEY" || name == "MISTRAL_KEY" || name == "DEEPSEEK_KEY" || name == "COHERE_KEY" || name == "GROK_KEY") {
       return value as unknown as T;
     }
     return JSON.parse(value) as T;

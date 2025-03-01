@@ -9,51 +9,79 @@ import { v4 as uuid } from "uuid";
 import { KeyProvider, Key, Model } from "../index";
 import { config } from "../../config";
 import { logger } from "../../logger";
-import { GrokKeyChecker } from "./checker";
+import { TogetherKeyChecker } from "./checker";
 
-export type GrokModel = "grok-beta" | "grok-vision-beta" | "grok-2-1212" | "grok-2-vision-1212";
+export type TogetherModel = "deepseek-ai/DeepSeek-R1" | "deepseek-ai/DeepSeek-V3" | "deepseek-ai/DeepSeek-R1-Distill-Llama-70B" | "deepseek-ai/DeepSeek-R1-Distill-Qwen-14B" | "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B" | "meta-llama/Llama-3.3-70B-Instruct-Turbo" | "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo" | "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo" | "meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo" | "meta-llama/Meta-Llama-3-8B-Instruct-Turbo" | "meta-llama/Meta-Llama-3-70B-Instruct-Turbo" | "meta-llama/Llama-3.2-3B-Instruct-Turbo" | "meta-llama/Meta-Llama-3-8B-Instruct-Lite" | "meta-llama/Meta-Llama-3-70B-Instruct-Lite" | "meta-llama/Llama-3-8b-chat-hf" | "meta-llama/Llama-3-70b-chat-hf" | "nvidia/Llama-3.1-Nemotron-70B-Instruct-HF" | "Qwen/Qwen2.5-Coder-32B-Instruct" | "Qwen/QwQ-32B-Preview" | "microsoft/WizardLM-2-8x22B" | "google/gemma-2-27b-it" | "google/gemma-2-9b-it" | "databricks/dbrx-instruct" | "google/gemma-2b-it" | "Gryphe/MythoMax-L2-13b" | "meta-llama/Llama-2-13b-chat-hf" | "mistralai/Mistral-Small-24B-Instruct-2501" | "mistralai/Mistral-7B-Instruct-v0.1" | "mistralai/Mistral-7B-Instruct-v0.2" | "mistralai/Mistral-7B-Instruct-v0.3" | "mistralai/Mixtral-8x7B-Instruct-v0.1" | "mistralai/Mixtral-8x22B-Instruct-v0.1" | "NousResearch/Nous-Hermes-2-Mixtral-8x7B-DPO" | "Qwen/Qwen2.5-7B-Instruct-Turbo" | "Qwen/Qwen2.5-72B-Instruct-Turbo" | "Qwen/Qwen2-72B-Instruct" | "Qwen/Qwen2-VL-72B-Instruct" | "upstage/SOLAR-10.7B-Instruct-v1.0";
 
-export const Grok_SUPPORTED_MODELS: readonly GrokModel[] = [
-  "grok-beta",
-  "grok-vision-beta",
-  "grok-2-1212",
-  "grok-2-vision-1212",
+export const Together_SUPPORTED_MODELS: readonly TogetherModel[] = [
+    "deepseek-ai/DeepSeek-R1",
+	"deepseek-ai/DeepSeek-V3",
+	"deepseek-ai/DeepSeek-R1-Distill-Llama-70B",
+	"deepseek-ai/DeepSeek-R1-Distill-Qwen-14B",
+	"deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B",
+	"meta-llama/Llama-3.3-70B-Instruct-Turbo",
+	"meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
+	"meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo",
+	"meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo",
+	"meta-llama/Meta-Llama-3-8B-Instruct-Turbo",
+	"meta-llama/Meta-Llama-3-70B-Instruct-Turbo",
+	"meta-llama/Llama-3.2-3B-Instruct-Turbo",
+	"meta-llama/Meta-Llama-3-8B-Instruct-Lite",
+	"meta-llama/Meta-Llama-3-70B-Instruct-Lite",
+	"meta-llama/Llama-3-8b-chat-hf",
+	"meta-llama/Llama-3-70b-chat-hf",
+	"nvidia/Llama-3.1-Nemotron-70B-Instruct-HF",
+	"Qwen/Qwen2.5-Coder-32B-Instruct",
+	"Qwen/QwQ-32B-Preview",
+	"microsoft/WizardLM-2-8x22B",
+	"google/gemma-2-27b-it",
+	"google/gemma-2-9b-it",
+	"databricks/dbrx-instruct",
+	"google/gemma-2b-it",
+	"Gryphe/MythoMax-L2-13b",
+	"meta-llama/Llama-2-13b-chat-hf",
+	"mistralai/Mistral-Small-24B-Instruct-2501",
+	"mistralai/Mistral-7B-Instruct-v0.1",
+	"mistralai/Mistral-7B-Instruct-v0.2",
+	"mistralai/Mistral-7B-Instruct-v0.3",
+	"mistralai/Mixtral-8x7B-Instruct-v0.1",
+	"mistralai/Mixtral-8x22B-Instruct-v0.1",
+	"NousResearch/Nous-Hermes-2-Mixtral-8x7B-DPO",
+	"Qwen/Qwen2.5-7B-Instruct-Turbo",
+	"Qwen/Qwen2.5-72B-Instruct-Turbo",
+	"Qwen/Qwen2-72B-Instruct",
+	"Qwen/Qwen2-VL-72B-Instruct",
+	"upstage/SOLAR-10.7B-Instruct-v1.0"
 ] as const;
 
-export interface GrokKey extends Key {
-  readonly service: "grok";
-  /** Set when key check returns a 401. */
+export interface TogetherKey extends Key {
+  readonly service: "together";
   isRevoked: boolean;
-  /** Set when key check returns a non-transient 429. */
   isOverQuota: boolean;
-  /** Threshold at which a warning email will be sent by Grok. */
   softLimit: number;
-  /** Threshold at which the key will be disabled because it has reached the user-defined limit. */
   hardLimit: number;
-  /** The maximum quota allocated to this key by Grok. */
   systemHardLimit: number;
-  /** The time at which this key was last rate limited. */
   rateLimitedAt: number;
   rateLimitRequestsReset: number;
   rateLimitTokensReset: number;
 }
 
-export type GrokKeyUpdate = Omit<
-  Partial<GrokKey>,
+export type TogetherKeyUpdate = Omit<
+  Partial<TogetherKey>,
   "key" | "hash" | "promptCount"
 >;
 
-export class GrokKeyProvider implements KeyProvider<GrokKey> {
-  readonly service = "grok" as const;
+export class TogetherKeyProvider implements KeyProvider<TogetherKey> {
+  readonly service = "together" as const;
 
-  private keys: GrokKey[] = [];
-  private checker?: GrokKeyChecker;
+  private keys: TogetherKey[] = [];
+  private checker?: TogetherKeyChecker;
   private log = logger.child({ module: "key-provider", service: this.service });
 
   constructor() {
-    const keyString = config.grokKey?.trim();
+    const keyString = config.togetherKey?.trim();
     if (!keyString) {
-      this.log.warn("Grok_KEY is not set. Grok API will not be available.");
+      this.log.warn("TOGETHER_KEY is not set. Together API will not be available.");
       return;
     }
     let bareKeys: string[];
@@ -63,7 +91,7 @@ export class GrokKeyProvider implements KeyProvider<GrokKey> {
       const newKey = {
         key: k,
 		org: "default",
-        service: "grok" as const,
+        service: "together" as const,
         isGpt4: false,
 		isGpt432k: false,
         isTrial: false,
@@ -80,7 +108,7 @@ export class GrokKeyProvider implements KeyProvider<GrokKey> {
         lastChecked: 0,
         promptCount: 0,
 		// Changing hash to uid sorry but annoying to work with if one key can have multiple profiles 
-        hash: `xai-${crypto
+        hash: `togt-${crypto
           .createHash("sha256")
           .update(k)
           .digest("hex")}`,
@@ -91,11 +119,11 @@ export class GrokKeyProvider implements KeyProvider<GrokKey> {
       };
       this.keys.push(newKey);
     }
-    this.log.info({ keyCount: this.keys.length }, "Loaded Grok keys.");
+    this.log.info({ keyCount: this.keys.length }, "Loaded Together keys.");
   }
   
   public getHashes() {
-	  this.checker = new GrokKeyChecker(this.keys, this.update.bind(this), this.createKey.bind(this));
+	  this.checker = new TogetherKeyChecker(this.keys, this.update.bind(this), this.createKey.bind(this));
 	  let x: string[] = [];
 	  this.keys.forEach((key) => {
 			x.push(key.hash);
@@ -111,7 +139,7 @@ export class GrokKeyProvider implements KeyProvider<GrokKey> {
 	  const newKey = {
         key: keyValue,
 		org: "default",
-        service: "grok" as const,
+        service: "together" as const,
         isGpt4: false,
 		isGpt432k: false,
 		isGpt4Turbo: false,
@@ -127,7 +155,7 @@ export class GrokKeyProvider implements KeyProvider<GrokKey> {
         lastUsed: 0,
         lastChecked: 0,
         promptCount: 0,
-        hash: `xai-${crypto
+        hash: `togt-${crypto
           .createHash("sha256")
           .update(keyValue)
           .digest("hex")}`,
@@ -142,7 +170,7 @@ export class GrokKeyProvider implements KeyProvider<GrokKey> {
   }
   
   public recheck() {
-	  this.checker = new GrokKeyChecker(this.keys, this.update.bind(this), this.createKey.bind(this));
+	  this.checker = new TogetherKeyChecker(this.keys, this.update.bind(this), this.createKey.bind(this));
 	  this.keys.forEach((key) => {
 			key.isDisabled = false;
 			key.isOverQuota = false; 
@@ -160,7 +188,7 @@ export class GrokKeyProvider implements KeyProvider<GrokKey> {
 
   public init() {
     if (config.checkKeys) {
-      this.checker = new GrokKeyChecker(this.keys, this.update.bind(this), this.createKey.bind(this));
+      this.checker = new TogetherKeyChecker(this.keys, this.update.bind(this), this.createKey.bind(this));
       this.checker.start();
     }
   }
@@ -212,7 +240,7 @@ export class GrokKeyProvider implements KeyProvider<GrokKey> {
 	selectedKey = keysByPriority[0];
 	
 	if (selectedKey == undefined) {
-		let message = "No active Grok keys available.";
+		let message = "No active Together keys available.";
 		throw new Error(message);
 	}
 	
@@ -251,7 +279,7 @@ export class GrokKeyProvider implements KeyProvider<GrokKey> {
 	  }
   }
   /** Called by the key checker to update key information. */
-  public update(keyHash: string, update: GrokKeyUpdate) {
+  public update(keyHash: string, update: TogetherKeyUpdate) {
     const keyFromPool = this.keys.find((k) => k.hash === keyHash)!;
     Object.assign(keyFromPool, { lastChecked: Date.now(), ...update });
     // this.writeKeyStatus();
@@ -277,7 +305,7 @@ export class GrokKeyProvider implements KeyProvider<GrokKey> {
    * Given a model, returns the period until a key will be available to service
    * the request, or returns 0 if a key is ready immediately.
    */
-  public getLockoutPeriod(model: Model = "grok-2-1212"): number {
+  public getLockoutPeriod(model: Model = "google/gemma-2b-it"): number {
 
 	let activeKeys = [] 
 
@@ -338,9 +366,9 @@ export class GrokKeyProvider implements KeyProvider<GrokKey> {
 
   public updateRateLimits(keyHash: string, headers: http.IncomingHttpHeaders) {
     const key = this.keys.find((k) => k.hash === keyHash)!;
-	const requestsReset = headers["x-ratelimit-reset-requests"];
+	const requestsReset = headers["x-ratelimit-reset"];
 	const tokensReset = headers["x-ratelimit-reset-tokens"];
-	
+
 	if (requestsReset && typeof requestsReset === "string") {
 	  this.log.info(
 		{ key: key.hash, requestsReset },
@@ -359,7 +387,7 @@ export class GrokKeyProvider implements KeyProvider<GrokKey> {
 	if (!requestsReset && !tokensReset) {
 	  this.log.warn(
 		{ key: key.hash },
-		`No rate limit headers in Grok response; skipping update`
+		`No rate limit headers in Together response; skipping update`
 	  );
 	  return;
 	}

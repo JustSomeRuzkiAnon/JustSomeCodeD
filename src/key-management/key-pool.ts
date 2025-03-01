@@ -8,6 +8,7 @@ import { GrokKeyProvider, GrokKeyUpdate } from "./grok/provider";
 import { CohereKeyProvider, CohereKeyUpdate } from "./cohere/provider";
 import { MistralKeyProvider, MistralKeyUpdate } from "./mistral/provider";
 import { DeepseekKeyProvider, DeepseekKeyUpdate } from "./deepseek/provider";
+import { TogetherKeyProvider, TogetherKeyUpdate } from "./together/provider";
 
 
 
@@ -25,6 +26,7 @@ export class KeyPool {
 	this.keyProviders.push(new MistralKeyProvider());
 	this.keyProviders.push(new DeepseekKeyProvider());
 	this.keyProviders.push(new CohereKeyProvider());
+	this.keyProviders.push(new TogetherKeyProvider());
 	
   }
   
@@ -48,6 +50,7 @@ export class KeyPool {
     const mistralKeys = this.keyProviders[5].getAllKeys();
 	const deepseekKeys = this.keyProviders[6].getAllKeys();
 	const cohereKeys = this.keyProviders[7].getAllKeys();
+	const togetherKeys = this.keyProviders[8].getAllKeys();
 
 	const combinedKeys = Array.prototype.concat.call(openaiKeys, anthropipcKeys, googleKeys, ai21Keys, grokKeys, mistralKeys, deepseekKeys);
 	return combinedKeys;
@@ -62,6 +65,7 @@ export class KeyPool {
 	  const mistralProvider = this.keyProviders[5]
 	  const deepseekProvider = this.keyProviders[6]
 	  const cohereProvider = this.keyProviders[7]
+	  const togetherProvider = this.keyProviders[8]
 	  
 	  let val = false
 	  if (key.includes("sk-ant-api") || key.startsWith("AKIA")) {
@@ -94,6 +98,7 @@ export class KeyPool {
 	const mistralProvider = this.keyProviders[5]
 	const deepseekProvider = this.keyProviders[6]
 	const cohereProvider = this.keyProviders[7]
+	const togetherProvider = this.keyProviders[8]
 	
 	
 	
@@ -105,7 +110,7 @@ export class KeyPool {
 	} else if (prefix === 'ant') { 
     	let key = anthropicProvider.getKeyByHash(keyHash);
 		return key 
-	} else if (prefix === 'pal') { 
+	} else if (prefix === 'goo') { 
     	let key = googleProvider.getKeyByHash(keyHash);
 		return key 
 	} else if (prefix === 'ai2') { 
@@ -123,7 +128,10 @@ export class KeyPool {
 	} else if (prefix === 'coh') { 
     	let key = cohereProvider.getKeyByHash(keyHash);
 		return key
-	}else {
+	} else if (prefix === 'tog') { 
+    	let key = togetherProvider.getKeyByHash(keyHash);
+		return key
+	} else {
 		return false
 	}
 	
@@ -139,6 +147,7 @@ export class KeyPool {
 	const mistralProvider = this.keyProviders[5]
 	const deepseekProvider = this.keyProviders[6]
 	const cohereProvider = this.keyProviders[7]
+	const togetherProvider = this.keyProviders[8]
 	
 	const prefix = keyHash.substring(0, 3);
 	if (prefix === 'oai') {
@@ -147,7 +156,7 @@ export class KeyPool {
 	} else if (prefix === 'ant') { 
     	anthropicProvider.deleteKeyByHash(keyHash);
 		return true 
-	} else if (prefix === 'pal') { 
+	} else if (prefix === 'goo') { 
     	googleProvider.deleteKeyByHash(keyHash);
 		return true 
 	} else if (prefix === 'ai2') { 
@@ -165,7 +174,10 @@ export class KeyPool {
 	} else if (prefix === 'coh') { 
     	cohereProvider.deleteKeyByHash(keyHash);
 		return true 	
-	} else {
+	} else if (prefix === 'tog') { 
+    	togetherProvider.deleteKeyByHash(keyHash);
+		return true
+	}  else {
 		// Nothing invalid key, shouldn't be possible (Maybe in future handle error)
 		return false
 	}
@@ -254,7 +266,9 @@ export class KeyPool {
   private getService(model: Model): AIService {
 	if (model.includes("bison") || model.includes("gemini") || model.includes("learnlm")) {
 	  return "google";
-	} else if (model.startsWith("j2-")) {
+	} else if (model.includes("/")) {
+      return "together";
+    } else if (model.startsWith("j2-")) {
       return "ai21";
     } else if (model.startsWith("gpt") || model.startsWith("dall-") || model.startsWith("text-embedding-") || model.startsWith("chatgpt") || model.startsWith("o1") || model.startsWith("o3") || model.startsWith("tts-")) {
       return "openai";
@@ -268,8 +282,7 @@ export class KeyPool {
       return "deepseek";
     } else if (model.startsWith("command") || model.startsWith("c4ai")) {
       return "cohere";
-    }
-	
+    } 
 	
     throw new Error(`Unknown service for model '${model}'`);
   }

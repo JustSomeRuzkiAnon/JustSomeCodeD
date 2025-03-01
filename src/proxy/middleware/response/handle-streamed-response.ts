@@ -112,6 +112,7 @@ export const handleStreamedResponse: RawResponseBodyHandler = async (
 	const isCohere = req.key?.service === "cohere";
 	const isGoogle = req.key?.service === "google";
 	const isMistral = req.key?.service === "mistral";
+	const isTogether = req.key?.service === "together";
 	const isGoogleOpenai = req.key?.service === "google" && req.inboundApi === "openai";
 
     type ProxyResHandler<T extends unknown> = (...args: T[]) => void;
@@ -181,7 +182,7 @@ export const handleStreamedResponse: RawResponseBodyHandler = async (
 			  }
 			}
 		  });
-		} else if (isCohere) { 
+		} else if (isCohere ) { 
 			const fullMessages = (partialMessage + str).split(/\r?\n\r?\n/);
 			partialMessage = fullMessages.pop() || "";
 			fullMessages.forEach((message) => {
@@ -209,7 +210,7 @@ export const handleStreamedResponse: RawResponseBodyHandler = async (
 				}
 			});
 			
-		} else if (isOpenAI || isDeepseek) {
+		} else if (isOpenAI || isDeepseek || isGrok) {
 		  const fullMessages = (partialMessage + str).split(/\r?\n\r?\n/);
 		  partialMessage = fullMessages.pop() || "";
 		  fullMessages.forEach((message) => {
@@ -279,6 +280,16 @@ export const handleStreamedResponse: RawResponseBodyHandler = async (
 			}
 		} else if (isMistral) { 
 			proxyRes.emit("full-sse-event", chunk);
+		} else if (isTogether) {
+			const fullMessages = (partialMessage + str).split(/\r?\n\r?\n/).filter(message => message !== "");
+			if (str.trim().endsWith("}")) {
+				partialMessage = "";
+				fullMessages.forEach(message => proxyRes.emit("full-sse-event", message));
+				fullMessage += str;
+			} else {
+				partialMessage += str;
+			}
+			
 		} else {
 		  const fullMessages = (partialMessage + str).split(/\r?\n\r?\n/).filter(message => message !== "");
 		  if (str.startsWith("event: completion") && str.trim().endsWith("\"}")) {
@@ -395,7 +406,7 @@ function transformEvent({
 	
   }
   
-  if (requestApi == "openai" && responseApi == "cohere"){
+  if (requestApi == "openai" && responseApi == "cohere" || responseApi == "together"){
 	let currentReason = null;
 	if (data !== "data: [DONE]") {
 		return { position: -1, event: data };
@@ -500,8 +511,8 @@ function copyHeaders(proxyRes: http.IncomingMessage, res: Response) {
  * Events are expected to be in the format they were received from the API.
  */
 function convertEventsToFinalResponse(events: string[], req: Request) {
-  if ( req.outboundApi === "cohere" || req.outboundApi === "deepseek" || req.outboundApi === "openai" || (req.outboundApi === "google" && req.inboundApi === "openai") ) {
-    let response: OpenAiChatCompletionResponse = {
+  if ( req.outboundApi === "cohere" || req.outboundApi === "grok" || req.outboundApi === "deepseek" || req.outboundApi === "openai" || req.outboundApi === "together" || (req.outboundApi === "google" && req.inboundApi === "openai") ) {
+	let response: OpenAiChatCompletionResponse = {
       id: "",
       object: "",
       created: 0,
@@ -516,7 +527,8 @@ function convertEventsToFinalResponse(events: string[], req: Request) {
       if (event === "data: [DONE]") {
         return acc;
       }
-
+	  
+	  
       const data = JSON.parse(event.slice("data: ".length));
 	  if (i === 0) {
 		return {
@@ -561,5 +573,7 @@ function convertEventsToFinalResponse(events: string[], req: Request) {
     };
     return response;
   }
+  
+  
   throw new Error("If you get this, something is fucked");
 }

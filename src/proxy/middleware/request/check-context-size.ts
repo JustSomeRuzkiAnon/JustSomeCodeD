@@ -52,6 +52,10 @@ export const checkContextSize: RequestPreprocessor = async (req) => {
       req.outputTokens = req.body.max_tokens;
       prompt = req.body.messages;
       break;
+	case "together":
+      req.outputTokens = req.body.max_tokens;
+      prompt = req.body.messages;
+      break;
 	case "cohere":
       req.outputTokens = req.body.max_tokens;
       prompt = req.body.messages;
@@ -106,6 +110,9 @@ function validateContextSize(req: Request) {
 
   const proxyMax =
     (req.outboundApi === "openai" ? OPENAI_MAX_CONTEXT :
+	req.outboundApi === "cohere" ? OPENAI_MAX_CONTEXT :
+	req.outboundApi === "deepseek" ? OPENAI_MAX_CONTEXT :
+	req.outboundApi === "together" ? OPENAI_MAX_CONTEXT :
     req.outboundApi === "anthropic" ? CLAUDE_MAX_CONTEXT :
     req.outboundApi === "google" ? GOOGLE_MAX_CONTEXT :
     req.outboundApi === "mistral" ? MISTRAL_MAX_CONTEXT :
@@ -114,7 +121,7 @@ function validateContextSize(req: Request) {
   let maxOutput = 0;
   let modelMax = 0;
   
-  if (req.outboundApi === "openai" || req.outboundApi === "grok" || req.outboundApi === "deepseek" || req.outboundApi === "cohere") {
+  if (req.outboundApi === "openai" || req.outboundApi === "grok" || req.outboundApi === "deepseek" || req.outboundApi === "cohere" || req.outboundApi == "together") {
 	maxOutput = OPENAI_MAX_OUTPUT
   } else if (req.outboundApi === "anthropic") {
     maxOutput = CLAUDE_MAX_OUTPUT
@@ -143,7 +150,9 @@ function validateContextSize(req: Request) {
     modelMax = 32768;
   } else if (model.match(/o1-/)) { // i think same as 4o?
     modelMax = 131072;
-  }else if (model.match(/gpt-4/)) {
+  }else if (model.match(/gpt-4\.5/)) {
+    modelMax = 131072;
+  } else if (model.match(/gpt-4/)) {
     modelMax = 8192;
   } else if (model.match(/claude-(?:instant-)?v1(?:\.\d)?(?:-100k)/)) {
     modelMax = 100000;

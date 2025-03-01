@@ -5,6 +5,7 @@ import { injectCsrfToken, checkCsrfToken } from "./csrf";
 import { usersApiRouter as apiRouter } from "./api/users";
 import { usersUiRouter as uiRouter } from "./ui/users";
 import { loginRouter } from "./login";
+import path from "path";
 
 
 const adminRouter = Router();
@@ -26,6 +27,11 @@ adminRouter.use("/manage", authorize({ via: "cookie" }), uiRouter);
 // This makes the stats page available at /admin/stats-users.
 adminRouter.get("/stats-users", authorize({ via: "cookie" }), (req, res) => {
   res.render("admin/stats-users");
+});
+
+// Serve the local Chart.js file from src/chart.js when requested at /chart.js
+adminRouter.get("/chart.js", (req, res) => {
+  res.sendFile(path.join(__dirname, "chart.js"));
 });
 
 export { adminRouter };

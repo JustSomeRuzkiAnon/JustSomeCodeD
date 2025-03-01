@@ -86,10 +86,15 @@ app.use("/user", userRouter);
 app.use("/proxy", proxyRouter);
 
 // ST compatiblity :3c ohoho it's funny to ignore /proxy/ etc. .-. here you go forward to universal proxy handling ._. no need for /proxy/ even now wowie
-const proxyPattern = /^(\/v1|\/v1beta\/v1alpha)?\/((chat\/completions|complete|messages|embeddings|images\/generations)|models\/([^\/]+)(\:generateContent|\:streamGenerateContent))?(\?key=([^"&\s]+))?$/;
+const proxyPattern = /^(\/v1|\/v1beta|\/v1alpha|\/beta)?\/((chat\/completions|complete|messages|embeddings|images\/generations|audio\/speech)|models\/([^\/]+)(\:generateContent|\:streamGenerateContent))?(\?key=([^"&\s]+))?$/;
 // wrap that in a lookahead (it seems to change fairly often so i dont want to do it directly not to mess with drago's workflow or smth)
 app.use(new RegExp(`(?=${proxyPattern.source})`), proxyRouter);
 app.use(/^(?=(?:\/v1)?\/models)/, proxyRouter); // /v1/models
+
+// Route (or redirect) /chart.js requests to the CDN version of Chart.js
+app.get("/chart.js", (req, res) => {
+  res.redirect("https://cdn.jsdelivr.net/npm/chart.js");
+});
 
 // 500 and 404
 app.use((err: any, _req: unknown, res: express.Response, _next: unknown) => {

@@ -252,6 +252,10 @@ export const transformOutboundPayload: RequestPreprocessor = async (req) => {
 	return 
   }
   
+  if (req.inboundApi == "openai" && req.outboundApi == "together") {
+	return 
+  }
+  
   if (alreadyTransformed || notTransformable) {
     return;
   }

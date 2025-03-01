@@ -25,7 +25,7 @@ import { init } from "../tokenization";
 import { buildFakeSseMessage } from "./middleware/common";
 
 
-export type QueuePartition = "claude" | "turbo" | "gpt-4" | "gpt-4-32k" | "gpt-o" | "gpt-4-turbo" | "google-exp" | "google-15" | "google-flash" | "google-20-flash" | "google-20-pro" | "google-flash-lite" | "google-thinking" | "ai21" | "grok" | "mistral" | "deepseek" | "cohere";
+export type QueuePartition = "claude" | "turbo" | "gpt-4" | "gpt-4-32k" | "gpt-o" | "gpt-4-turbo" | "google-exp" | "google-15" | "google-flash" | "google-20-flash" | "google-20-pro" | "google-flash-lite" | "google-thinking" | "ai21" | "grok" | "mistral" | "deepseek" | "cohere" | "together";
 
 const queue: Request[] = [];
 const log = logger.child({ module: "request-queue" });
@@ -85,6 +85,8 @@ const sameUserPredicate = (incoming: Request) => (queued: Request) => {
 export function enqueue(req: Request) {
   const enqueuedRequestCount = queue.filter(sameUserPredicate(req)).length;
   let isGuest = req.user?.token === undefined;
+  
+  
 
   // All Agnai.chat requests come from the same IP, so we allow them to have
   // more spots in the queue. Can't make it unlimited because people will
@@ -119,6 +121,7 @@ export function enqueue(req: Request) {
   // deregister the handler when the request is dequeued.
   if (req.body.stream === "true" || req.body.stream === true) {
     const res = req.res!;
+
     if (!res.headersSent) {
       initStreaming(req);
     }
@@ -246,6 +249,10 @@ function getPartitionForRequest(req: Request): QueuePartition {
     return "cohere";
   }
   
+  if (provider === "together") {
+    return "together";
+  }
+  
   if (provider === "mistral" || model.startsWith("mistral")) {
     return "mistral";
   }
@@ -317,6 +324,7 @@ function processQueue() {
   const google20FlashLiteLockout = keyPool.getLockoutPeriod("gemini-1.5-flash");
   const deepseekLockout = keyPool.getLockoutPeriod("deepseek-chat");
   const cohereLockout = keyPool.getLockoutPeriod("command-light");
+  const togetherLockout = keyPool.getLockoutPeriod("google/gemma-2b-it");
 
 
   const reqs: (Request | undefined)[] = [];
@@ -374,6 +382,10 @@ function processQueue() {
   
   if (cohereLockout === 0) {
     reqs.push(dequeue("cohere"));
+  }
+  
+  if (togetherLockout === 0) {
+    reqs.push(dequeue("together"));
   }
 
   reqs.filter(Boolean).forEach((req) => {

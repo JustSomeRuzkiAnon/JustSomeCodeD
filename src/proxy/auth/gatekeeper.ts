@@ -22,6 +22,9 @@ function getProxyAuthorizationFromRequest(req: ExtendedRequest): string | undefi
   // Bearer token in the Authorization header.  So we need to check both.
   // Prefer the Authorization header if both are present.
   
+  if (req.user) {
+	return req.user.token
+  }
 
   if (req.headers.authorization) {
     const token = req.headers.authorization?.slice("Bearer ".length);

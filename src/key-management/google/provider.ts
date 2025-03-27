@@ -44,7 +44,8 @@ export const GOOGLE_SUPPORTED_MODELS = [
   // "gemini-2.0-flash-thinking-exp-1219",
   "gemini-2.0-flash-thinking-exp",
   "gemini-2.0-pro-exp",
-  "gemini-2.0-pro-exp-02-05"
+  "gemini-2.0-pro-exp-02-05",
+  "gemini-2.5-pro-exp-03-25"
   // Embeddings maybe in future 
   // "embedding-001",
   // "text-embedding-004",

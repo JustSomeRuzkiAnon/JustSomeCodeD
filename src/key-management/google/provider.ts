@@ -264,7 +264,20 @@ export class GoogleKeyProvider implements KeyProvider<GoogleKey> {
 				} 
 			} catch { return false } 
 		})();
-		
+
+		const Google25ProExp = await (async () => {
+  			try {
+				const response25ProExp = await axios.post(
+      				config.googleProxy + '/v1beta/models/gemini-2.5-pro-exp-03-25:generateContent',
+      				payload,
+      				{ headers: { 'content-type': 'application/json', 'x-goog-api-key': key.key } }
+    			      );
+    			      const check25ProExp = response25ProExp.data && response25ProExp.data["candidates"];
+      				if (check25ProExp) {
+      					key.hasQuotaExp = true;
+    				}
+  			} catch { return false; }
+		})();
 		
 		if (key.hasQuota15 == false && key.hasQuotaExp == false && key.hasQuota20Flash == false && key.hasQuotaThinking == false && key.hasQuota20Pro == false && key.hasQuotaFlashLite == false) {
 			key.isRevoked = true;
